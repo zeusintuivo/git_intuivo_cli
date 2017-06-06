@@ -1,0 +1,25 @@
+#!/bin/bash
+#
+# @author Zeus Intuivo <zeus@intuivo.com>
+#
+
+red=`tput setaf 1`
+cyan=`tput setaf 6`
+blue23=`tput setaf 23`
+blue33=`tput setaf 33`
+blue30=`tput setaf 33`
+gray238=`tput setaf 238`
+yellow220=`tput setaf 220`
+green=`tput setaf 2`
+reset=`tput sgr0`
+
+echo "${blue23} • ${blue30} Edit description manually only ${reset}"
+
+CURBRANCH=$(git branch | sed -n -e 's/^\* \(.*\)/\1/p')     # expected output feature/TO-229
+
+
+git branch --edit-description """${CURBRANCH}"""
+
+
+
+# :)

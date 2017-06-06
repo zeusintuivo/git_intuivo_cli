@@ -1,0 +1,41 @@
+#!/bin/bash
+#
+# @author Zeus Intuivo <zeus@intuivo.com>
+#
+#
+.each() {
+  local local_actions="${1}"
+  local local_items="${2}"
+  local one_item
+  local one_action
+  local action
+
+  while read -r one_item; do                                                  # Get longest file name
+  {
+    if [ ! -z "${one_item}" ] ; then  # if not empty
+    {
+      while read -r one_action; do                                                  # Get longest file name
+      {
+        if [ ! -z "${one_action}" ] ; then  # if not empty
+        {
+          #echo -e "${one_item} ${one_action}"
+          #echo -e "${one_action}"
+          action="${one_action/\{\}/$one_item}"  # replace value inside string substitution expresion bash
+          echo -e "${action}"
+          eval ${action}
+          #
+        }
+        fi
+      }
+      done <<< "${local_actions}"
+    }
+    fi
+  }
+  done <<< "${local_items}"
+}
+
+ALL_LOCAL_BRANCHES_BRANCHES=$(git branch -l --no-color | sed '1d' | sed 's/[*]//g' | sed 's/\ //g' )
+ACTIONS="git checkout {}
+pull
+"
+.each  "${ACTIONS}" "${ALL_LOCAL_BRANCHES_BRANCHES}"

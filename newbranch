@@ -1,0 +1,31 @@
+#!/bin/bash
+# @author Zeus Intuivo <zeus@intuivo.com>
+#
+# if argument as not passed
+if [[ -z "$1"  ]] ; then 
+	# show all branches
+    branches -l
+    exit 0;
+fi 
+
+git checkout -b  """$@""";
+
+
+	# Get the current branch name into a variable
+	#CURBRANCH=$(git symbolic-ref HEAD | sed -e 's,.*/\(.*\),\1,')   # wrong output   TO-229
+	CURBRANCH=$(git branch | sed -n -e 's/^\* \(.*\)/\1/p')          # correct output feature/TO-229 
+
+	echo "New Branch Created: """"${CURBRANCH}""";
+	echo "Adding push default "
+	echo "start_${CURBRANCH}" > "start_${CURBRANCH}"
+	git add "start_${CURBRANCH}"
+	git commit -m "Created Branch ${CURBRANCH}" 
+	git push --set-upstream origin """${CURBRANCH}"""
+	rm "start_${CURBRANCH}"
+	git add "start_${CURBRANCH}"
+	git commit -m "...start work"
+	git push 
+	echo "Adding pull default "
+	git branch --set-upstream-to=origin/"""${CURBRANCH}""" """${CURBRANCH}"""
+	echo "Adding Description "
+	git branch --edit-description """${CURBRANCH}"""

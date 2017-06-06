@@ -1,0 +1,74 @@
+#!/bin/bash
+#
+# @author Zeus Intuivo <zeus@intuivo.com>
+#
+#
+.each() {
+  local local_actions="${1}"
+  local local_items="${2}"
+  local one_item
+  local one_action
+  local action
+
+  while read -r one_item; do
+  {
+    if [ ! -z "${one_item}" ] ; then  # if not empty
+    {
+      while read -r one_action; do
+      {
+        if [ ! -z "${one_action}" ] ; then  # if not empty
+        {
+          action="${one_action/\{\#\}/$one_item}"  # replace value inside string substitution expresion bash
+          eval ${action}
+        }
+        fi
+      }
+      done <<< "${local_actions}"
+    }
+    fi
+  }
+  done <<< "${local_items}"
+}
+
+.remove_for_each() {
+  local local_actions="${1}"
+  local local_items="${2}"
+  local one_item
+  local one_action
+  local action
+
+  while read -r one_item; do
+  {
+    if [ ! -z "${one_item}" ] ; then  # if not empty
+    {
+      while read -r one_action; do
+      {
+        if [ ! -z "${one_action}" ] ; then  # if not empty
+        {
+          action="${one_item/$one_action\//}"  # replace value inside string substitution expresion bash
+          echo "${action}"
+        }
+        fi
+      }
+      done <<< "${local_actions}"
+    }
+    fi
+  }
+  done <<< "${local_items}"
+}
+
+
+GET_ALL_REMOTES=$(git remote -v | sed 's/\t/|/g' | cut -d'|'  -f1 | sort | uniq)
+
+ALL_REMOTE_BRANCHES_BRANCHES=$(git branch -r --no-color | sed '1d' | sed 's/[*]//g' | sed 's/\ //g' )
+ACTIONS="pwd
+git checkout {#}
+pull
+"
+
+# Remove from the ALL WORDS FROM LIST2 that are match into LIST1
+ALL_REMOTE_BRANCHES_BRANCHES_WITHOUT_ORIGIN=$(.remove_for_each "${GET_ALL_REMOTES}" "${ALL_REMOTE_BRANCHES_BRANCHES}")
+
+# Perform all actions in LIST1 for each element in LIST2
+.each  "${ACTIONS}" "${ALL_REMOTE_BRANCHES_BRANCHES_WITHOUT_ORIGIN}"
+

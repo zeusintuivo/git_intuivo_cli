@@ -1,0 +1,5 @@
+#!/bin/bash
+#
+# @author Zeus Intuivo <zeus@intuivo.com>
+#
+git blame --since=3.weeks --  $@

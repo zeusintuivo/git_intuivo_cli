@@ -1,0 +1,190 @@
+#!/bin/zsh
+#
+# @author Zeus Intuivo <zeus@intuivo.com>
+#
+#
+# echo "${$(git status)#* by }" | head -1
+gray242="\\033[38;5;242m"
+
+repeat_single_char_spacer() {
+  # Sample usage:
+  #               LONGEST_NAME=$(get_longest_name_length "${LIST_OF_FILENAMES_OR_STRINGS}")
+  #               FILENAME_LENGTH="${#FILENAME}"   # get string length
+  #               CALCULATE_SPACER=$(( $LONGEST_NAME - $FILENAME_LENGTH ))
+  #               SPACER=$(repeat_single_char_spacer " " $CALCULATE_SPACER)
+
+  for ((x = 0; x < ${2}; x++)); do
+    #echo "${1}"
+    printf %s "${1}"
+  done
+}
+
+get_longest_name_length() {
+  # Sample usage:
+  #               LONGEST_NAME=$(get_longest_name_length "${LIST_OF_FILENAMES_OR_STRINGS}")
+  local ONE_CHANGED_FILES_WITH_STATUS
+  local CHANGED_FILES_WITH_STATUS_WITH_TAB_CHANGED_TO_PIPE="${1}"
+  local FILENAME_LENGTH=0
+  local LONGEST_NAME=0
+  while read -r ONE_CHANGED_FILES_WITH_STATUS; do                                                  # Get longest file name
+  {
+    # if not empty
+    if [ ! -z "${ONE_CHANGED_FILES_WITH_STATUS}" ] ; then
+    {
+      FILENAME_LENGTH="${#ONE_CHANGED_FILES_WITH_STATUS}"   # get string length
+      (( FILENAME_LENGTH > LONGEST_NAME )) && LONGEST_NAME=$FILENAME_LENGTH
+    }
+    fi
+    #echo "$(echo "$ONE_CHANGED_FILES_WITH_STATUS" | xargs -I {} echo "{}:1")"
+  }
+  done <<< "${CHANGED_FILES_WITH_STATUS_WITH_TAB_CHANGED_TO_PIPE}"
+  echo $(( $LONGEST_NAME + 1 ))
+}
+
+function cut_file_contents_from_to() {
+	# Sample use:
+	#  cut_file_contents_from_to "# If you come" "Example aliases" ~/.zshrc
+	# REF: https://unix.stackexchange.com/questions/243207/how-can-i-delete-everything-until-a-pattern-and-everything-after-another-pattern
+	#test: Working sample
+	#from1="If you come"; to2="Example aliases"; a="$(cat ~/.zshrc)"; a="$(echo "${a#*"$from1"}")"; echo "$from1${a%%"$to2"*}$to2"
+	local from1 to2 a filename
+	from1="${1}";
+	to2="${2}";
+	filename="${3}"
+	a="$(cat ${filename})";
+	a="$(echo "${a#*"$from1"}")";
+	echo "$from1${a%%"$to2"*}$to2"
+} # end function
+
+branch_ahead_and_or_behind() {
+  #!/bin/bash
+  # by http://github.com/jehiah
+  # this prints out some branch status (similar to the '... ahead' info you get from git status)
+
+  # example:
+  # $ git branch-status
+  # dns_check (ahead 1) | (behind 112) origin/master
+  # master (ahead 2) | (behind 0) origin/master
+  local local_branch remote_branch
+  # after git 2.5+
+  git for-each-ref --format="%(refname:short) %(push:track)" refs/heads  | \
+  # before git 2.5-
+  #git for-each-ref --format="%(refname:short) %(upstream:short)" refs/heads | \
+  while read local_branch remote_branch
+  do
+      [ -z "$remote_branch" ] && continue
+      git rev-list --left-right ${local_branch}...${remote_branch} -- 2>/dev/null >/tmp/git_upstream_status_delta || continue
+      LEFT_AHEAD=$(grep -c '^<' /tmp/git_upstream_status_delta)
+      RIGHT_AHEAD=$(grep -c '^>' /tmp/git_upstream_status_delta)
+      echo "$local_branch (ahead $LEFT_AHEAD) | (behind $RIGHT_AHEAD) $remote_branch"
+  done
+}
+# @Overwrite of $HOME/.oh-my-zsh/lib/git.zsh
+# Outputs current branch info in prompt format
+function git_prompt_info() {
+  local ref
+  if [[ "$(command git config --get oh-my-zsh.hide-status 2>/dev/null)" != "1" ]]; then
+    ref=$(command git symbolic-ref HEAD 2> /dev/null) || \
+    ref=$(command git rev-parse --short HEAD 2> /dev/null) || return 0
+    echo "$ZSH_THEME_GIT_PROMPT_PREFIX${ref#refs/heads/}$(parse_git_dirty)$ZSH_THEME_GIT_PROMPT_SUFFIX"
+  fi
+} # end function
+
+GET_ZSHRC_WITH_PARTIALY=$(cut_file_contents_from_to "# If you come" "Example aliases" ~/.zshrc)
+eval "${GET_ZSHRC_WITH_PARTIALY}"
+#source $HOME/.oh-my-zsh/lib/git.zsh
+
+GET_ALL_SUBDIRS=$(find * -maxdepth 0 -type d)
+
+LONGEST_SUBDIR_NAME=$(get_longest_name_length "${GET_ALL_SUBDIRS}")
+FILENAME_LENGTH="${#FILENAME}"   # get string length
+CALCULATE_SPACER=$(( $LONGEST_SUBDIR_NAME - $FILENAME_LENGTH ))
+SPACER=$(repeat_single_char_spacer " " $CALCULATE_SPACER)
+
+CURDIR="${PWD}"
+while read -r ONE_SUBDIR; do
+{
+
+	if [ ! -z "${ONE_SUBDIR}" ] ; then # if not empty
+	{
+    # Go projet dir
+		cd "${CURDIR}/${ONE_SUBDIR}"
+
+    # Fetch to obtain a current status for remote
+    #git fetch   >/dev/null 2>&1 # suppress stdln and errln output
+
+		# conversion to bash
+		this_prompt=$(# @Overwrite of $HOME/.oh-my-zsh/lib/git.zsh
+# Outputs current branch info in prompt format
+function git_prompt_info() {
+  local ref
+  if [[ "$(command git config --get oh-my-zsh.hide-status 2>/dev/null)" != "1" ]]; then
+    ref=$(command git symbolic-ref HEAD 2> /dev/null) || \
+    ref=$(command git rev-parse --short HEAD 2> /dev/null) || return 0
+    echo "$ZSH_THEME_GIT_PROMPT_SUFFIX$gray242${ref#refs/heads/}"
+  fi
+};git_prompt_info)
+		this_ex=$(# @Overwrite of $HOME/.oh-my-zsh/lib/git.zsh
+# Outputs current branch info in prompt format
+function git_prompt_info() {
+  local ref
+  if [[ "$(command git config --get oh-my-zsh.hide-status 2>/dev/null)" != "1" ]]; then
+    ref=$(command git symbolic-ref HEAD 2> /dev/null) || \
+    ref=$(command git rev-parse --short HEAD 2> /dev/null) || return 0
+    echo "$(parse_git_dirty)"
+  fi
+};git_prompt_info)
+
+    this_ahead=$( # @Overwrite of https://stackoverflow.com/questions/7773939/show-git-ahead-and-behind-info-for-all-branches-including-remote_branchs
+branch_ahead_and_or_behind() {
+  #!/bin/bash
+  # by http://github.com/jehiah
+  # this prints out some branch status (similar to the '... ahead' info you get from git status)
+
+  # example:
+  # $ git branch-status
+  # dns_check (ahead 1) | (behind 112) origin/master
+  # master (ahead 2) | (behind 0) origin/master
+  local local_branch remote_branch
+  # before git 2.5-
+  git for-each-ref --format="%(refname:short) %(upstream:short)" refs/heads | \
+
+  # after git 2.5+
+  #git for-each-ref --format="%(refname:short) %(push:track)" refs/heads  | \
+  #  available with Git 1.9/2/0 (Q1 2014)
+  #git for-each-ref --format="%(refname:short) %(upstream:trackshort)" refs/heads | \
+  while read local_branch remote_branch
+  do
+      [ -z "$remote_branch" ] && continue
+      git rev-list --left-right ${local_branch}...${remote_branch} -- 2>/dev/null >/tmp/git_upstream_status_delta || continue
+      LEFT_AHEAD=$(grep -c '^<' /tmp/git_upstream_status_delta)
+      RIGHT_AHEAD=$(grep -c '^>' /tmp/git_upstream_status_delta)
+      echo "$local_branch (ahead $LEFT_AHEAD) | (behind $RIGHT_AHEAD) $remote_branch"
+  done
+};branch_ahead_and_or_behind)
+  this_spacer=$(
+repeat_single_char_spacer() {
+  local this_filename_length this_calculate_spacer
+  #this_directory_name_only=${PWD##*/}
+  this_filename_length="${#ONE_SUBDIR}"
+  this_calculate_spacer=$(( $LONGEST_SUBDIR_NAME - $this_filename_length + 2 ))
+  #this_calculate_spacer=$(( $this_calculate_spacer  ))
+  for ((x = 0; x < $this_calculate_spacer; x++)); do
+    printf %s ' '
+  done
+};repeat_single_char_spacer)
+
+		#eval "echo -e \"$(git_prompt_info)${ret_status##*➜} $fg[cyan]${PWD##*/}$reset_color \"" | sed 's@%@\\@g' | sed 's@\\{@\\@g' | sed 's@\\}@\\@g' | sed -e 's@\\@@g' | tr -d '()' |  sed 's:(::;s:)::'
+		#eval "echo -e \"${ret_status##*➜} $fg[cyan]${PWD##*/}$reset_color $(git_prompt_info)\"" sed 's:(::;s:)::'
+		#eval "echo -e \"$PS1\""  | sed 's@%@\\@g' | sed 's@\\{@\\@g' | sed 's@\\}@\\@g' | sed -e 's@\\@@g'
+		echo -e $this_prompt ${ret_status##*➜} $fg[cyan]${PWD##*/}$reset_color$this_ex$this_spacer$gray242 $this_ahead | sed 's@%@\\@g' | sed 's@\\{@\\@g' | sed 's@\\}@\\@g' | sed -e 's@\\@@g' | tr -d '()' |  sed 's:(::;s:)::'
+	}
+	fi
+  #added changes
+  #improved scripts
+  #pull
+  #git log --patch --color=always | less +/some | ü some
+}
+done <<< "${GET_ALL_SUBDIRS}"
+
+cd "${CURDIR}"

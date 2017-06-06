@@ -1,0 +1,31 @@
+#!/bin/bash
+#
+# @author Zeus Intuivo <zeus@intuivo.com>
+# @action
+#
+
+# check to see if I used a message, then it will behave as a put
+#bash shell script check input argument
+
+# set working directory as the scripts location during the execution of script
+# cd "$(dirname "$0")"
+# REF: http://stackoverflow.com/questions/927358/how-to-undo-last-commits-in-git
+
+ACTION=`basename "$0"`
+
+# check operation systems
+(
+  if [[ "$(uname)" == "Darwin" ]] ; then
+    # Do something under Mac OS X platform
+    git reset --soft HEAD^     # use --soft if you want to keep your changes
+
+  elif [[ "$(expr substr $(uname -s) 1 5)" == "Linux" ]] ; then
+    # Do something under GNU/Linux platform
+    git reset --soft HEAD^     # use --soft if you want to keep your changes
+
+  elif [[ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]] ; then
+    # Do something under Windows NT platform
+    git reset --soft HEAD^     # use --soft if you want to keep your changes
+    # nothing here
+  fi
+)

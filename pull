@@ -1,0 +1,209 @@
+#!/bin/bash
+#
+# @author Zeus Intuivo <zeus@intuivo.com>
+#
+
+#PULLCURRENTBRANCH
+# ref: http://stackoverflow.com/questions/8190392/is-there-a-git-command-that-returns-the-current-project-name
+[[ -z "${PULLCURRENTBRANCH}" ]] && PULLCURRENTBRANCH=$(git config --local remote.origin.url|sed -n 's#.*/\([^.]*\)\.git#\1#p');
+[[ -z "${GIT_USER_NAME}" ]] && GIT_USER_NAME=$(command git config user.name 2> /dev/null)
+
+#KEY?
+    if [[ "${PWD}" == *"clis"* ]] ; then
+      if [[ "${GIT_USER_NAME}" != *"zeusintuivo"* ]] ; then
+        sshswitchkey zeus ;
+        GIT_USER_NAME=$(command git config user.name 2> /dev/null)
+      fi
+    else
+      LOAD_TEMP_KEYS="# Empty script"
+      if [ -f .temp_keys ] ; then
+        LOAD_TEMP_KEYS=$(<.temp_keys)
+        eval "${LOAD_TEMP_KEYS}"
+        if [[ ! -z "${SSH_KEY}" ]] && [[ "${GITUSER}" != "${GIT_USER_NAME}" ]] ; then
+          sshswitchkey "${SSH_KEY}"
+          GIT_USER_NAME=$(command git config user.name 2> /dev/null)
+        fi
+      fi
+    fi
+
+#
+# C H E C K   H O W   C O M P U T E R   H A N D L E S   E R R O R S   --Start
+#
+test_positives(){
+  # REF https://stackoverflow.com/questions/1101957/are-there-any-standard-exit-status-codes-in-linux
+  KIND=""
+  ls werwerwerwerwerwerwerwerwerwerwerr >/dev/null 2>&1;
+  if (( $? == 0 )) ;  then  # Intel processor
+    KIND="INTEL"
+  fi
+  if [ $? == 0 ]; then   # Mac Intel processor
+    KIND="${KIND}MAC"
+  fi
+  echo "${KIND}"
+}
+PROCESSOR_ERROR=$(test_positives)
+# DEBUG MACPOSITIVE MACPOSITIVE echo "${MACPOSITIVE}"
+# DEBUG MACPOSITIVE exit 1
+#
+# C H E C K   H O W   C O M P U T E R   H A N D L E S   E R R O R S   --End
+#
+
+
+#branchname
+PULLCURRENTBRANCH=$(git rev-parse --abbrev-ref HEAD);
+
+#colors
+[[ -z "${CYAN}" ]] && CYAN="\\033[38;5;123m"
+[[ -z "${PURPLE_BLUE}" ]] && PURPLE_BLUE="\\033[38;5;93m"
+[[ -z "${GRAY241}" ]] && GRAY241="\\033[38;5;241m"
+[[ -z "${YELLOW226}" ]] && YELLOW226="\\033[38;5;226m"
+[[ -z "${YELLOW214}" ]] && YELLOW214="\\033[38;5;214m"
+[[ -z "${RESET}" ]] && RESET="\\033[0m"
+[[ -z "${RED}" ]] && RED="\\033[38;5;1m"
+[[ -z "${BRIGHT_BLUE87}" ]] && BRIGHT_BLUE87="\\033[38;5;87m"
+GRAYEDOUT="\033[01;30m"
+RED="\033[01;31m"
+GREEN="\033[01;32m"
+YELLOW="\033[01;33m"
+DARKBLUE="\033[01;34m"
+DARKGREEN="\033[38;5;22m"
+PURPLE="\033[01;35m"
+CYAN="\033[01;36m"
+WHITEBOLD="\033[01;37m"
+
+LIGHTGREEN="\033[38;5;83m"
+LIGHTPINK="\033[1;204m"
+LIGHTYELLOW="\033[38;5;227m"
+GREEN_OVER_DARKBLUE="\033[38;5;76m\033[48;5;17m"
+YELLOW_OVER_DARKBLUE="\033[38;5;220m\033[48;5;20m"
+DARKBLUE_OVER_DARKBLUE="\033[01;34m\033[48;5;20m"
+
+RESET="\033[0m"
+show_lines(){
+  local one_line res
+  while read -r one_line; do
+  {
+    [[ ! -z "${one_line}" ]] && [[ "${one_line}" == *"|"* ]] && res=$(echo "${YELLOW214}${one_line}" | sed "s/\(+\)/\\\\033[01;32m\1\\\\033[38;5;214m/g" | sed "s/\(-\)/\\\\033[01;31m\1\\\\033[38;5;214m/g" | sed "s/\(|\)/\\\\033[38;05;93m\1\\\\033[38;5;241m/g")
+    [[ ! -z "${one_line}" ]] && [[ "${one_line}" == *"|"* ]] && echo -e "${res}"
+  }
+  done <<< "${1}"
+}
+
+#fetch
+#echo
+echo -e "${PURPLE_BLUE} === ${GRAY241} ${GIT_USER_NAME} ${PURPLE_BLUE} fetches from ${CYAN} ${PULLCURRENTBRANCH} ${PURPLE_BLUE} === ${GRAY241} ";
+#echo
+
+        # Exception to only for this time. Pull a shallow copy
+        if [[ "${PULLCURRENTBRANCH}" == "symfony-intuivo-cli" ]] ; then
+        {
+
+          echo -e "${PURPLE_BLUE} === ${GRAY241} ${GIT_USER_NAME} ${PURPLE_BLUE} pulls shallow copy for this project ${CYAN} ${PULLCURRENTBRANCH} ${PURPLE_BLUE} === ${GRAY241} ";
+          #echo ""
+          #git fetch --depth 1
+        }
+        else
+        {
+
+          #echo ""
+          # if file exists, I assume this is a shallow copy
+          # REF: http://stackoverflow.com/questions/6941889/is-it-safe-to-shallow-clone-with-depth-1-create-commits-and-pull-updates-aga
+          # REF: https://github.com/git/git/commit/9cfde9ee8f6dc82365f1e977935960f34108076b documentation on Shallow I viewd on 2016 07 July 02
+          if [[ -f ".git/shallow" ]] ;  then
+              fetch_result=$(git fetch --depth 1 2>&1 )  # Check and catch capture all stout sdout output, error will return 1 to $?)
+            else
+              fetch_result=$(git fetch 2>&1 )  # Check and catch capture all stout sdout output, error will return 1 to $?)
+          fi
+            ERROR_HAPPENED=""
+            [[ "${PROCESSOR_ERROR}" == *"MAC"* ]] && [ $? != 0 ] && ERROR_HAPPENED="1"
+            [[ "${PROCESSOR_ERROR}" == *"INTEL"* ]] && (( $? != 0 )) && ERROR_HAPPENED="1"
+            if [ "${ERROR_HAPPENED}" ]  || \
+              [[ "${fetch_result}" == *"Could not resolve"* ]] || \
+              [[ "${fetch_result}" == *"Repository not found"* ]] || \
+              [[ "${fetch_result}" == *"Could not read from"* ]] || \
+              [[ "${fetch_result}" == *"fatal"* ]] || \
+              [[ "${fetch_result}" == *"FAILED"* ]] || \
+              [[ "${fetch_result}" == *"failed"* ]] || \
+              [[ "${fetch_result}" == *"error"* ]] || \
+              [[ "${fetch_result}" == *"ERROR"* ]] || \
+              [[ "${fetch_result}" == *"denied"* ]] \
+              ; then
+            {
+              echo -e "${PURPLE_BLUE} fetch ${RED}Failed ${YELLOW226}!!!  ${RESET}"
+              [[ "${fetch_result}" == *"Could not resolve"* ]] && echo -e "${BRIGHT_BLUE87} It appears YOU HAVE ${YELLOW226}NO INTERNET CONNECTION \o_0/ ${RESET}"
+              [[ "${fetch_result}" == *"Repository not found"* ]] && echo -e "${BRIGHT_BLUE87} It appears YOU HAVE ${YELLOW226}NO ACCESS TO THIS FOR YOU ${RED} ${GIT_USER_NAME} ${RESET}"
+              [[ "${fetch_result}" == *"Could not read from"* ]] && echo -e "${BRIGHT_BLUE87} It appears YOU HAVE ${YELLOW226}IF IT EXISTS YOU ARE NOT ALLOWED ${RED} ${GIT_USER_NAME} ${YELLOW226}!!! ${RESET}"
+              echo -e "${RESET}${fetch_result}  "
+              exit 69;
+            }
+            fi
+        }
+        fi
+
+
+
+
+#pull
+#echo
+echo -e "${PURPLE_BLUE} === ${GRAY241} ${GIT_USER_NAME} ${PURPLE_BLUE} pulls from ${CYAN} ${PULLCURRENTBRANCH} ${PURPLE_BLUE} === ${GRAY241} ";
+
+
+        # Exception to only for this time. Pull a shallow copy
+        if [[ "${PULLCURRENTBRANCH}" == "symfony-intuivo-cli" ]] ; then
+        {
+
+          echo -e "${PURPLE_BLUE} === ${GRAY241} ${GIT_USER_NAME} ${PURPLE_BLUE} pulls ${BRIGHT_BLUE87} shallow copy ${PURPLE_BLUE} for this project ${CYAN} ${PULLCURRENTBRANCH} ${PURPLE_BLUE} === ${GRAY241} ";
+          #echo ""
+          #git pull --progress --depth 1 origin master
+          pull_result=$(git pull --depth 1 origin master 2>&1 )  # Check and catch capture all stout sdout output, error will return 1 to $?)
+        }
+        else
+        {
+
+          #echo ""
+          # if file exists, I assume this is a shallow copy
+          # REF: http://stackoverflow.com/questions/6941889/is-it-safe-to-shallow-clone-with-depth-1-create-commits-and-pull-updates-aga
+          # REF: https://github.com/git/git/commit/9cfde9ee8f6dc82365f1e977935960f34108076b documentation on Shallow I viewd on 2016 07 July 02
+          if [[ -f ".git/shallow" ]] ;  then
+              pull_result=$(git pull  --depth 1 origin """${PULLCURRENTBRANCH}""" 2>&1 )  # Check and catch capture all stout sdout output, error will return 1 to $?)
+              #git pull  --progress --depth 1 origin """${PULLCURRENTBRANCH}"""
+            else
+              pull_result=$(git pull origin """${PULLCURRENTBRANCH}""" 2>&1 )  # Check and catch capture all stout sdout output, error will return 1 to $?)
+          fi
+
+        }
+        fi
+            ERROR_HAPPENED=""
+            [[ "${PROCESSOR_ERROR}" == *"MAC"* ]] && [ $? != 0 ] && ERROR_HAPPENED="1"
+            [[ "${PROCESSOR_ERROR}" == *"INTEL"* ]] && (( $? != 0 )) && ERROR_HAPPENED="1"
+            if [ "${ERROR_HAPPENED}" ]  || \
+              [[ "${pull_result}" == *"Could not resolve"* ]] || \
+              [[ "${pull_result}" == *"Repository not found"* ]] || \
+              [[ "${pull_result}" == *"Could not read from"* ]] || \
+              [[ "${pull_result}" == *"fatal"* ]] || \
+              [[ "${pull_result}" == *"FAILED"* ]] || \
+              [[ "${pull_result}" == *"failed"* ]] || \
+              [[ "${pull_result}" == *"error"* ]] || \
+              [[ "${pull_result}" == *"ERROR"* ]] || \
+              [[ "${pull_result}" == *"denied"* ]] \
+              ; then
+            {
+              echo -e "${PURPLE_BLUE} pull ${RED}Failed ${YELLOW226}!!!  ${RESET}"
+              [[ "${pull_result}" == *"Could not resolve"* ]] && echo -e "${BRIGHT_BLUE87} It appears YOU HAVE ${YELLOW226}NO INTERNET CONNECTION \o_0/ ${RESET}"
+              [[ "${pull_result}" == *"Repository not found"* ]] && echo -e "${BRIGHT_BLUE87} It appears YOU HAVE ${YELLOW226}NO ACCESS TO THIS FOR YOU ${RED} ${GIT_USER_NAME} ${RESET}"
+              [[ "${pull_result}" == *"Could not read from"* ]] && echo -e "${BRIGHT_BLUE87} It appears YOU HAVE ${YELLOW226}IF IT EXISTS YOU ARE NOT ALLOWED ${RED} ${GIT_USER_NAME} ${YELLOW226}!!! ${RESET}"
+              echo -e "${RESET}${pull_result}  "
+              exit 69;
+            }
+            fi
+            if [[ "${pull_result}" == *"|"* ]]   ; then
+            {
+             show_lines "${pull_result}"
+            }
+            fi
+    #Laravel Specific - dump composer autoload
+
+    # if file exists for LARAVEL in this repo
+    if [ -f "artisan.sh" ] && [ command -v composer >/dev/null 2>&1 ]; then
+      composer dump-autoload
+    fi

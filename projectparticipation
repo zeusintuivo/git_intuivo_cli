@@ -1,0 +1,83 @@
+#!/bin/bash
+#
+# @author Zeus Intuivo <zeus@intuivo.com>
+#
+#colors
+#colors
+[[ -z "${CYAN}" ]] && CYAN="\\033[38;5;123m"
+[[ -z "${PURPLE_BLUE}" ]] && PURPLE_BLUE="\\033[38;5;93m"
+[[ -z "${GRAY241}" ]] && GRAY241="\\033[38;5;241m"
+[[ -z "${RED}" ]] && RED="\\033[38;5;1m"
+[[ -z "${BRIGHT_BLUE87}" ]] && BRIGHT_BLUE87="\\033[38;5;87m"
+
+#reponame
+# ref: http://stackoverflow.com/questions/8190392/is-there-a-git-command-that-returns-the-current-project-name
+[[ -z "${REPONAME}" ]] && REPONAME=$(git config --local remote.origin.url|sed -n 's#.*/\([^.]*\)\.git#\1#p');
+[[ -z "${GIT_USER_NAME}" ]] && GIT_USER_NAME=$(command git config user.name 2> /dev/null)
+
+#branchname
+PULLCURRENTBRANCH=$(git rev-parse --abbrev-ref HEAD);
+
+SORT_ORDER="sort -nr";
+SORT_MAX_COUNT="sort -tr";
+
+#projectparticipation
+#echo
+echo -e "${PURPLE_BLUE} === Project participation for ${CYAN} ${REPONAME} ${PURPLE_BLUE} === ${GRAY241} ";
+#echo
+# check operation systems
+(
+  if [[ "$(uname)" == "Darwin" ]] || [[ "$(expr substr $(uname -s) 1 5)" == "Linux" ]] ; then  # MAC, Linux
+    # Do something under GNU/Linux platform
+    export TERM=msys
+		#git shortlog -sne
+		git log --pretty=format:%an | gawk '{ ++c[$1]; } END { for(cc in c) printf "%6d %s\n",c[cc],cc; }' | ${SORT_ORDER};
+
+		#echo
+		echo -e "${PURPLE_BLUE} === TOTAL COUNT === ${GRAY241} ";
+		#echo
+
+		git log --pretty=format:%an | gawk '{ ++c[$3]; } END { for(cc in c) printf "%6d %s\n",c[cc],cc; }' | ${SORT_MAX_COUNT};
+		#echo
+
+  elif [[ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]] ; then  #windows
+    # Do something under Windows NT platform
+		set TERM=msys
+
+		#sort distinguishing
+
+		# Define sort use for windows
+		SORTFIND=$(echo 1 | sort -r);
+
+		# assert 1 as return
+		if [[ "${SORTFIND}" == "1" ]] ; then  #using gnu sort
+			#
+			# echo "gnu sort";
+			#
+			SORT_ORDER="sort -nr";
+			SORT_MAX_COUNT="sort -tr";
+
+		else   #using windows sort
+			#
+			# echo "windows sort";
+			#
+			SORT_ORDER="sort /r";
+			SORT_MAX_COUNT="sort /r";
+		fi
+
+		#List
+		git log --pretty=format:%an | gawk '{ ++c[$1]; } END { for(cc in c) printf "%6d %s\n",c[cc],cc; }' | ${SORT_ORDER}	;
+		#git shortlog -sne
+		#echo
+		echo -e "${PURPLE_BLUE} === TOTAL COUNT === ${GRAY241} ";
+		#echo
+
+		git log --pretty=format:%an | gawk '{ ++c[$3]; } END { for(cc in c) printf "%6d %s\n",c[cc],cc; }' | ${SORT_MAX_COUNT};
+		#echo
+
+  fi
+)
+
+
+
+

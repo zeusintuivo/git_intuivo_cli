@@ -1,0 +1,11 @@
+#!/bin/bash
+# @author Zeus Intuivo <zeus@intuivo.com>
+#
+# if argument as not passed
+if [[ -z "$1"  ]] ; then 
+	# show all branches
+    branches -l
+    exit 0;
+fi 
+
+git branch -d "$@"

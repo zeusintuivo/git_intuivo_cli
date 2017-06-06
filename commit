@@ -1,0 +1,1400 @@
+#!/usr/bin/env bash
+#!/bin/bash
+#
+# @author Zeus Intuivo <zeus@intuivo.com>
+#
+# TODO Factor this out of here
+
+display_lines_with_prefix() {
+    # þ
+    local ONELINE
+    local PREFIX="${1}"
+    local SIMPLE_PREFIX=$(echo "${PREFIX}" | sed 's/ //g' )
+    local LINES=$(echo "${2}" \
+    | sed 's/^\ /þ                /g' \
+    | sed 's/loop/\\033\[38\;5\;124mloop\\033\[0m/g' \
+    | sed 's/until\ /\\033\[38\;5\;124muntil \\033\[0m/g' \
+    | sed 's/while\ /\\033\[38\;5\;124mwhile \\033\[0m/g' \
+    | sed 's/done/\\033\[38\;5\;124mdone\\033\[0m/g' \
+    | sed 's/do/\\033\[38\;5\;124mdo\\033\[0m/g' \
+    | sed 's/def\ /\\033\[38\;5\;124mdef \\033\[38\;5\;2m/g' \
+    | sed 's/end/\\033\[38\;5\;124mend\\033\[0m/g' \
+    | sed 's/if\ /\\033\[38\;5\;124mif \\033\[0m/g' \
+    | sed 's/else/\\033\[38\;5\;124melse\\033\[0m/g' \
+    | sed 's/@@/\\033\[38\;5\;23m@@\\033\[0m/g' \
+    | sed 's/then/\\033\[38\;5\;124mthen\\033\[0m/g' \
+    | sed 's/\=/\\033\[38\;5\;124m\=\\033\[0m/g' \
+    | sed 's/\?/\\033\[38\;5\;124m\?\\033\[0m/g' \
+    | sed 's/\:/\\033\[38\;5\;58m\:\\033\[0m/g' \
+    | sed 's/\,/\\033\[38\;5\;58m\,\\033\[0m/g' \
+    | sed 's/\"/\\033\[38\;5\;58m\"\\033\[0m/g' \
+    | sed "s/'/\\\\033\[38\;5\;58m'\\\\033\[0m/g" \
+    | sed 's/[(]/\\033\[38\;5\;58m\(\\033\[0m/g' \
+    | sed 's/[)]/\\033\[38\;5\;58m\)\\033\[0m/g' \
+    | sed 's/[{]/\\033\[38\;5\;58m\{\\033\[0m/g' \
+    | sed 's/[}]/\\033\[38\;5\;58m\}\\033\[0m/g' \
+    | sed 's/#/\\033\[38\;5\;58m#\\033\[0m/g' \
+    | sed 's/$(/\\033\[38\;5\;58m$(\\033\[0m/g' \
+ )
+#    | sed 's/.*"\(.*\)"[^"]*$/\\033\[38\;5\;3m\1\\033\[0m/g' \       # Fail attempt color inside of " "  between insted, it crops out the contents between " "
+#    | sed 's/\;/\\033\[38\;5\;58m\;\\033\[0m/g' \                    # Fail attempt colored commaa
+#    | sed "s/.*'\(.*\)'[^']*$/\\\\033\[38\;5\;3m\1\\\\033\[0m/g" \   # Fail attempt color inside of ' '  between insted, it crops out the contents between ' '
+    #while read -r ONELINE; do
+    for ONELINE in ${LINES}; do
+    {
+        if [[ "${ONELINE}" == "--"* || "${ONELINE}" == "@@"* || "${ONELINE}" == "++"* ]] ; then
+        {
+            echo -e "${SIMPLE_PREFIX}\033[38;5;58m${ONELINE}"
+        }
+        else
+        {
+            echo -e "${PREFIX}""""${ONELINE}""" | sed 's/þ/ /g'
+        }
+        fi
+    }
+    done
+    #done <<< """${LINES}"""
+}
+repeat_single_char_spacer() {
+  # Sample usage:
+  #               LONGEST_NAME=$(get_longest_name_length "${LIST_OF_FILENAMES_OR_STRINGS}")
+  #               FILENAME_LENGTH="${#FILENAME}"   # get string length
+  #               CALCULATE_SPACER=$(( $LONGEST_NAME - $FILENAME_LENGTH ))
+  #               SPACER=$(repeat_single_char_spacer " " $CALCULATE_SPACER)
+  #               echo ${FILENAME}${SPACER}
+  for ((x = 0; x < ${2}; x++)); do
+    #echo "${1}"
+    printf %s "${1}"
+  done
+}
+
+get_longest_name_length() {
+  # Sample usage:
+  #               LONGEST_NAME=$(get_longest_name_length "${LIST_OF_FILENAMES_OR_STRINGS}")
+  local ONE_CHANGED_FILES_WITH_STATUS
+  local CHANGED_FILES_WITH_STATUS_WITH_TAB_CHANGED_TO_PIPE="${1}"
+  local FILENAME_LENGTH=0
+  local LONGEST_NAME=0
+
+  #while read -r ONE_CHANGED_FILES_WITH_STATUS; do                                                  # Get longest file name
+  for ONE_CHANGED_FILES_WITH_STATUS in ${CHANGED_FILES_WITH_STATUS_WITH_TAB_CHANGED_TO_PIPE}; do
+  {
+    # if not empty
+    if [ ! -z "${ONE_CHANGED_FILES_WITH_STATUS}" ] ; then
+    {
+      FILENAME_LENGTH="${#ONE_CHANGED_FILES_WITH_STATUS}"   # get string length
+      (( FILENAME_LENGTH > LONGEST_NAME )) && LONGEST_NAME=$FILENAME_LENGTH
+    }
+    fi
+    #echo "$(echo "$ONE_CHANGED_FILES_WITH_STATUS" | xargs -I {} echo "{}:1")"
+  }
+    done
+  #done <<< "${CHANGED_FILES_WITH_STATUS_WITH_TAB_CHANGED_TO_PIPE}"
+  echo $LONGEST_NAME
+} #end get_longest_name_length
+
+split_files() {
+    # Sample use
+    # IFS=\| read STATUS FILENAME <<EOF
+    # split_files ${ONE_CHANGED_FILES_WITH_STATUS}
+    # EOF
+    #echo "A|app/assets/javascripts/loading.js"
+    echo "${1##*-|}"
+} #end split_files
+
+present_files() {
+    local PYMENTIZE_COMMAND_EXISTS=$(command -v pygmentize 2>&1 && echo "test" | pygmentize 2>&1) # Check and catch capture all stout sdout output, error will return none 0 to $?)
+    # echo "${PYGMENTIZE_COMMAND_EXISTS-x}"
+    local CHANGED_FILES_WITH_STATUS_WITH_TAB_CHANGED_TO_PIPE="${1}"
+    local LONGEST_NAME=$(get_longest_name_length "${CHANGED_FILES_WITH_STATUS_WITH_TAB_CHANGED_TO_PIPE}")
+    # echo DEBUG PRESENT "LONGEST_NAME: ${LONGEST_NAME}"
+    local ONE_CHANGED_FILES_WITH_STATUS IFS STATUS FILENAME
+                if [ ! -z ${COLUMNS+x} ]; then   # check if a variable is set and not empty # in mac I got no $COLUMNS for some reason
+                {
+                    COLUMNS=$COLUMNS
+                    # echo "Columns: $COLUMNS"
+                }
+                else
+                {
+                    export LINES=$(tput lines)
+                    export COLUMNS=$(tput cols)
+                    # echo "Lines: " $lines
+                    # echo "Columns: " $columns
+                }
+                fi
+                # Check again
+                if [ -z "${COLUMNS+x}" ] ; then  # check if a variable is set and empty
+                {
+                    export COLUMNS=80
+                    echo "ERROR: Reading the columns \$COLUMNS bash environment value. Just so you know"
+                }
+                fi
+    # while read -r ONE_CHANGED_FILES_WITH_STATUS; do                                                 # Loop to all files
+    # echo DEBUG PRESENT "${CHANGED_FILES_WITH_STATUS_WITH_TAB_CHANGED_TO_PIPE}"
+    for ONE_CHANGED_FILES_WITH_STATUS in ${CHANGED_FILES_WITH_STATUS_WITH_TAB_CHANGED_TO_PIPE}; do
+    {
+        # echo DEBUG PRESENT "ONE_CHANGED_FILES_WITH_STATUS: ${ONE_CHANGED_FILES_WITH_STATUS}"
+        if [ ! -z "${ONE_CHANGED_FILES_WITH_STATUS}" ] ; then # if not empty
+        {
+            #  Expecting Sample "A|app/assets/javascripts/loading.js"  "${ONE_CHANGED_FILES_WITH_STATUS##*-|}"
+            IFS=\| read STATUS FILENAME <<EOF
+${ONE_CHANGED_FILES_WITH_STATUS}
+EOF
+
+            if [ ! -z "${FILENAME}" ] ; then
+            {
+                FILENAME_LENGTH="${#FILENAME}"   # get string length
+                # echo DEBUG PRESENT "FILENAME: ${FILENAME}"
+                # echo DEBUG PRESENT "FILENAME_LENGTH: ${FILENAME_LENGTH}"
+
+                CALCULATE_END_OF_SCREEN_CUT_MESSAGE=$(( $COLUMNS - $LONGEST_NAME ))
+                if (( ${CALCULATE_END_OF_SCREEN_CUT_MESSAGE} == 0 )) ; then
+                {
+                    export COLUMNS=80
+                    CALCULATE_END_OF_SCREEN_CUT_MESSAGE="$LONGEST_NAME"
+                    echo "ERROR: Reading the CALCULATE_END_OF_SCREEN_CUT_MESSAGE value. Just so you know"
+                    #echo "zero CALCULATE_END_OF_SCREEN_CUT_MESSAGE: ${CALCULATE_END_OF_SCREEN_CUT_MESSAGE}"
+                # }
+                # else
+                # {
+                #     echo "COLUMNS: ${COLUMNS}"
+                #     echo "LONGEST_NAME: ${LONGEST_NAME}"
+                #     echo "CALCULATE_END_OF_SCREEN_CUT_MESSAGE: ${CALCULATE_END_OF_SCREEN_CUT_MESSAGE}"
+                }
+                fi
+                # echo DEBUG PRESENT "FILENAME: ${FILENAME}"
+                FILE_LASTEST_COMMIT_AUTHOR="$(git log -n 1 --pretty=format:%an -- "${FILENAME}" | trim_start_space | cut -c -10  )"
+                # echo DEBUG PRESENT "FILE_LASTEST_COMMIT_AUTHOR: ${FILE_LASTEST_COMMIT_AUTHOR}"
+                ME_NAME="$(git config user.name | trim_start_space | cut -c -10  )"
+                # echo DEBUG PRESENT "ME_NAME: ${ME_NAME}"
+                SHOW_AUTHOR="\033[38;5;58m"
+                # echo DEBUG PRESENT "SHOW_AUTHOR: ${SHOW_AUTHOR}"
+                EXTRA_DETAILS_NOT_COMMITED_YET=""
+                if [[ "${ME_NAME}" == "${FILE_LASTEST_COMMIT_AUTHOR}" ]] ; then
+                {
+                    CALCULATE_END_OF_SCREEN_CUT_MESSAGE=$(( $CALCULATE_END_OF_SCREEN_CUT_MESSAGE - 10 ))
+                }
+                else
+                {
+                    CALCULATE_END_OF_SCREEN_CUT_MESSAGE=$(( $CALCULATE_END_OF_SCREEN_CUT_MESSAGE - 21 ))
+                    SHOW_AUTHOR="\033[48;5;94m\033[38;5;57m${FILE_LASTEST_COMMIT_AUTHOR}\033[0m.\033[38;5;219m"
+                    [[ -f "${FILENAME}" ]] && EXTRA_DETAILS_NOT_COMMITED_YET=$(fileparticipationincolors "${FILENAME}" | grep "NCY")
+                }
+                fi
+                # echo DEBUG PRESENT "CALCULATE_END_OF_SCREEN_CUT_MESSAGE: ${CALCULATE_END_OF_SCREEN_CUT_MESSAGE}"
+                FILE_LASTEST_COMMIT_MESSAGE="$(git log -n 1 --pretty=format:%s -- "${FILENAME}" | trim_start_space | cut -c -${CALCULATE_END_OF_SCREEN_CUT_MESSAGE}  )"
+                # echo DEBUG PRESENT "FILE_LASTEST_COMMIT_MESSAGE: ${FILE_LASTEST_COMMIT_MESSAGE}"
+                # CALCULATE_SPACER=$LONGEST_NAME-$FILENAME_LENGTH
+                CALCULATE_SPACER=$(( $LONGEST_NAME - $FILENAME_LENGTH ))
+                # echo DEBUG PRESENT "CALCULATE_SPACER: ${CALCULATE_SPACER}"
+                SPACER=$(repeat_single_char_spacer " " $CALCULATE_SPACER)
+                # echo DEBUG PRESENT "SPACER: ${SPACER}"
+                if [[ "${STATUS}" == "AM" ]] ; then     # added    & modified
+                {
+                    echo  -e "\033[38;5;63m${FILENAME}\033[38;5;232m:1${SPACER}\033[38;5;70mA${red}M - ${SHOW_AUTHOR}${FILE_LASTEST_COMMIT_MESSAGE}"
+                }
+                elif [[ "${STATUS}" == "MM" ]] ; then     # added    & modified
+                {
+                    echo  -e "\033[38;5;63m${FILENAME}\033[38;5;232m:1${SPACER}\033[38;5;70mM${red}M - ${SHOW_AUTHOR}${FILE_LASTEST_COMMIT_MESSAGE}"
+                }
+                elif [[ "${STATUS}" == "M°" ]] ; then     # modifed and commited
+                {
+                    echo  -e "\033[38;5;70m${FILENAME}\033[38;5;232m:1${SPACER}\033[38;5;70mM${green}M - ${SHOW_AUTHOR}${FILE_LASTEST_COMMIT_MESSAGE}"
+                }
+                elif [[ "${STATUS}" == "AD" ]] ; then     # added  & deleted
+                {
+                    echo  -e "\033[38;5;64m${FILENAME}\033[38;5;232m:1${SPACER}\033[38;5;70mA${red} D- ${SHOW_AUTHOR}${FILE_LASTEST_COMMIT_MESSAGE}"
+                }
+                elif [[ "${STATUS}" == *"M"* ]] ; then       # modified dark blue  \033[38;5;33m
+                {
+                    #STATUS=$(echo "${STATUS}" | sed  "s/M//g")
+                    echo  -e "\033[38;5;117m${FILENAME}\033[38;5;232m:1 ${SPACER}${red}${STATUS} - ${SHOW_AUTHOR}${FILE_LASTEST_COMMIT_MESSAGE}"
+                }
+                elif [[ "${STATUS}" == *"A"* ]] ; then     # added    dark green \033[38;5;124m
+                {
+                    echo  -e "\033[38;5;70m${FILENAME}\033[38;5;232m:1${SPACER}\033[38;5;70m${STATUS}  - ${SHOW_AUTHOR}${FILE_LASTEST_COMMIT_MESSAGE}"
+                }
+                elif [[ "${STATUS}" == *"D"* ]] ; then     # deleted   dark red \033[38;5;124m
+                {
+                    echo  -e "\033[38;5;124m${FILENAME}\033[38;5;232m:1${SPACER}${red}${STATUS}  - ${SHOW_AUTHOR}${FILE_LASTEST_COMMIT_MESSAGE}"
+                }
+                elif [[ "${STATUS}" == *"R100"* ]] ; then  # removed   dark red \033[38;5;124m
+                {
+                    echo  -e "\033[38;5;124m${FILENAME}\033[38;5;232m:1${SPACER}${red}${STATUS}  - ${SHOW_AUTHOR}Removed ${FILE_LASTEST_COMMIT_MESSAGE}"
+                }
+                elif [[ "${STATUS}" == *"R°"* ]] ; then  # git mv moved   dark red \033[38;5;124m
+                {
+                    echo  -e "\033[38;5;124m${FILENAME}\033[38;5;232m:1${SPACER}${red}${STATUS}  - ${SHOW_AUTHOR}Renamed ${FILE_LASTEST_COMMIT_MESSAGE}"
+                }
+                elif [[ "${STATUS}" == *"?"* ]] ; then    # new       light green \033[38;5;154m  pink  \033[38;5;129m
+                {
+                    COMMIT_MSG=""
+                    [[ -f "${FILENAME}" ]] && COMMIT_MSG="Added new file `basename "${FILENAME}"`"
+                    [[ -d "${FILENAME}/" ]] && COMMIT_MSG="Added new folder `basename "${FILENAME}"`"
+                    echo  -e "\033[38;5;195m${FILENAME}\033[38;5;232m:1${SPACER}${red}${STATUS} - ${reset}commit ${FILENAME} ${COMMIT_MSG} "
+                }
+                else
+                {
+                    COMMIT_MSG=""
+                    [[ -f "${FILENAME}" ]] && COMMIT_MSG="Added new file `basename "${FILENAME}"`"
+                    [[ -d "${FILENAME}/" ]] && COMMIT_MSG="Added new folder `basename "${FILENAME}"`"
+                    echo  -e "\033[38;5;195m${FILENAME}\033[38;5;232m:1${SPACER}${red}${STATUS} - ${reset}commit ${FILENAME} ${COMMIT_MSG} "
+                }
+                fi
+                # Extra commit details presentation - start
+                if [[ ! -z "${EXTRA_DETAILS_NOT_COMMITED_YET}" ]] && [[ "${STATUS}" != "M°" ]] ; then
+                {
+                    SEEKING="NCY"
+                    IMPLACING=$(echo -e "${FILENAME}:\\033[38;5;202m")
+                    echo -e "${blue23} • ${blue30} not yet commited file: git add -p ${FILENAME};${reset} git commit ${FILENAME}"
+                    echo -e "\033[38;5;202m$(repeat_single_char_spacer "«" $COLUMNS)"
+                    echo -e "${EXTRA_DETAILS_NOT_COMMITED_YET}" |  sed -e s"${SEEKING}.....""${IMPLACING}"g
+                    echo -e "\033[38;5;202m$(repeat_single_char_spacer "»" $COLUMNS)"
+                }
+                elif [[ -z "${EXTRA_DETAILS_NOT_COMMITED_YET}" ]] && [[ "${STATUS}" == "°M" ]]; then
+                {
+                    # Statements
+                    echo -e "${blue23} • ${blue30} not yet commited file: git add -p ${FILENAME};${reset} git commit ${FILENAME}"
+                    REMOVED=$(git log -p -n 1  "${FILENAME}" | grep  '\(^@@\|::\|^\-\)' | sed '/^--/d' | sed '/^@@/d' )
+                    if [[ ! -z "${REMOVED}" ]] ; then
+                    {
+
+                        echo -e "${blue23} • ${red}  removed "
+                        echo -e "${red}---- ${yellow214}"
+                        if [[ ! -z "${PYGMENTIZE_COMMAND_EXISTS}" ]] && [[ "${PYGMENTIZE_COMMAND_EXISTS}" == *"command not found"* ]]; then
+                        {
+                            REMOVED=$(git log -p -n 1  "${FILENAME}" | grep  '\(^@@\|::\|^\-\)' | sed 's/^-//g' )
+                        }
+                        else
+                        {
+                            REMOVED=$(git log -p -n 1  "${FILENAME}" | grep  '\(^@@\|::\|^\-\)' | sed 's/^-//g' | pygmentize)
+                        }
+                        fi
+                        display_lines_with_prefix "${red}-            " "${REMOVED}"
+                        echo -e "${red}---- ${yellow214}"
+                    }
+                    fi
+                    ADDED=$(git log -p -n 1  "${FILENAME}" | grep  '\(^@@\|::\|^\+\)' | sed '/^++/d' | sed '/^@@/d' )
+                    if [[ ! -z "${ADDED}" ]] ; then
+                    {
+                        echo -e "${blue23} • ${green}  Added "
+                        echo -e "${green}++++ ${yellow214}"
+                        if [[ ! -z "${PYGMENTIZE_COMMAND_EXISTS}" ]] && [[ "${PYGMENTIZE_COMMAND_EXISTS}" == *"command not found"* ]]; then
+                        {
+                            ADDED=$(git log -p -n 1  "${FILENAME}" | grep  '\(^@@\|::\|^\+\)' | sed 's/^+//g' )
+                        }
+                        else
+                        {
+                            ADDED=$(git log -p -n 1  "${FILENAME}" | grep  '\(^@@\|::\|^\+\)' | sed 's/^+//g' | pygmentize)
+                        }
+                        fi
+                        display_lines_with_prefix "${green}+            " "${ADDED}"
+                        echo -e "${green}++++ ${yellow214}"
+                    }
+                    fi
+                }
+                fi
+                # Extra commit details presentation - end
+
+                # REF on regular bash expressions: https://stackoverflow.com/questions/19482123/extract-part-of-a-string-using-bash-cut-split
+                # Expected sample ONE_CHANGED_FILES_WITH_STATUS="A|app/assets/javascripts/loading.js"
+                # STATUS=$(echo "${ONE_CHANGED_FILES_WITH_STATUS%|*}")      # bash expressions retain the part before the |
+                # FILENAME=$(echo "${ONE_CHANGED_FILES_WITH_STATUS##*|}")   # bash expressions retain the part after the  |
+                # REF bash expresions between string between two words REF: http://stackoverflow.com/questions/31669103/extract-part-between-two-strings-in-a-variable-in-unix/31671307#31671307
+                # tester_one="update set_tables set abc=7 where bcd=9"
+                # output="${tester_one#* set }"                             # bash expressions retain the part after " set "
+                # output="${output% where *}"                               # bash expressions retain the part before " where "
+                # echo "${${t#* set }% where *}"                            # bash expressions string between " set " and " where "
+            }
+            else # ERROR READING STATUS - Still show something    and in deleted files it provides the list of other files inside folders
+            {
+                echo -e "\033[38;5;202m${FILENAME}\033[38;5;232m:1 \033[38;5;202m${STATUS}    " # --deprecated " - # commit - ERROR READING STATUS - Still show something"
+            }
+            fi
+        }
+        fi
+        # echo "$(echo "$ONE_CHANGED_FILES_WITH_STATUS" | xargs -I {} echo "{}:1")"
+    }
+    done
+    # done <<< "${CHANGED_FILES_WITH_STATUS_WITH_TAB_CHANGED_TO_PIPE}"
+    # exit 69; # DEBUG PRESENT END OF present_files
+} #end present_files
+
+trim_start_space() {
+    sed -e 's/^[[:space:]]*//' | sed 's/^\ //g' | sed 's/^\t//g'
+} # end trim_start_space
+
+remote_branch_exists() {
+    local branch_name="${1}"
+    local remote_branches=$(branch 2>&1)  # Check and catch capture all stout sdout output, error will return none 0 to $?)
+    local found_branch=$(echo "${remote_branches}" | grep "${branch_name}" )
+    #echo "${#found_branch}"   # get string length
+    if [[ -z "${found_branch}" ]] ; then   # if empty
+    {
+        echo "not found"  # non zero exit means error . not found
+    }
+    else
+    {
+        echo "si found"   # zero exit means no error  .si found
+    }
+    fi
+} # end function remote_branch_exists
+
+commit_status_continue() {
+    #git status -sb
+
+    [[ -z "${FOUND_DIR_JOURNAL}" ]] && . journal_find_journal_dir
+    . $FOUND_DIR_JOURNAL/journal_get_bash_colors
+    [[ -z "${BRANCH_MERGE_AGAINST}" ]] && . $FOUND_DIR_JOURNAL/journal_get_branch_merge_against >/dev/null 2>&1;
+    [[ -z "${CURBRANCH}" ]] && . $FOUND_DIR_JOURNAL/journal_get_current_branch >/dev/null 2>&1;
+
+    # Check BRANCH_MERGE_AGAINST - start
+    if [[ "$(remote_branch_exists "${BRANCH_MERGE_AGAINST}")" == "not found" ]]  ;  then
+    {
+        echo ""
+        echo -e "${red}WARNING! ${yellow214}I believe this repo to be Branched Merged Against :${red}${BRANCH_MERGE_AGAINST}${yellow214}:
+        but ${BRANCH_MERGE_AGAINST} branch does not exists remotely or localy.
+        and I use this branch to compare against. Defaulting to :${red}master${yellow214}: ${reset}"
+        echo ""
+
+        BRANCH_MERGE_AGAINST='master'
+        if [[ "$(remote_branch_exists "${BRANCH_MERGE_AGAINST}")" == "not found" ]]  ;  then
+        {
+            echo ""
+            echo -e "${red}ERROR! ${yellow214}Not even this branch :${red}${BRANCH_MERGE_AGAINST}${yellow214}: exists ${yellow214}
+            then I don't know what to then. Exiting ${reset}"
+            echo ""
+            git status -sb
+            exit 69; # CONTROLLED ERROR EXIT - NOT FOUND master $BRANCH_MERGE_AGAINST
+        }
+        fi
+    }
+    fi
+    # Check BRANCH_MERGE_AGAINST - end
+
+    # Check CURBRANCH for commit branch instead of regularname EXPECT "(HEAD detached at 7c41f04)" - start
+    if [[ "${CURBRANCH}" == *"detached at"* ]]  ;  then
+    {
+        CURBRANCH="${CURBRANCH#* detached at }"         # bash expressions string after " detached at "
+        CURBRANCH="${CURBRANCH%\)*}"               # bash expressions string before  ")"
+        #echo "${BRANCH_MERGE_AGAINST}..${CURBRANCH}";
+        # Check CURBRANCH for commit branch - end
+    }
+    fi
+
+    CHANGED_FILES=$(git diff --name-status ${BRANCH_MERGE_AGAINST}..${CURBRANCH} | cut -c3-)
+    CHANGED_FILES_WITH_STATUS="$(git diff --name-status ${BRANCH_MERGE_AGAINST}..${CURBRANCH})"
+
+
+    #echo -e "${blue23} • ${blue30} The following files changed  ${reset}"
+    #echo -e "${green}++++ ${yellow214}"
+    #echo "$(echo "$CHANGED_FILES" | xargs -I {} echo "{}:1")"
+    echo " "
+    echo -e "${blue23} • ${blue30} Workload changed between ${orange208}${BRANCH_MERGE_AGAINST}${blue30} and ${yellow214}${CURBRANCH}  ${reset}"
+    echo " "
+    echo -e "${green}+++++ ${yellow214}"
+
+    # Assert a list like:
+    # M    \tab     .gitignore
+    # A \tab    app/assets/javascripts/loading.js
+    CHANGED_FILES_WITH_STATUS=$(echo "${CHANGED_FILES_WITH_STATUS}" | sed 's/\t/|/g')  # replace tabs for |
+    # Assert a list like:
+    # M|.gitignore
+    # A|app/assets/javascripts/loading.js
+
+    present_files "${CHANGED_FILES_WITH_STATUS}"
+
+    # Assert this command: git status -sb
+    # ## feature/DGT-78...origin/feature/DGT-78
+    #  M app/assets/stylesheets/bookings/confirmation.css
+    #  M app/helpers/account/booking_helper.rb
+    # M  config/locales/de.yml
+    # M  config/locales/en.yml
+    #CHANGED_FILES_WITH_GSB=$(git status -sb  | trim_start_space | sed '1d' | sed 's/\ /\t/' | sed 's/\t/|/g') # remove first line, #change space for tabs  --deprecated
+    # Assert  --deprecated
+    # M|app/assets/stylesheets/bookings/confirmation.css
+    # M|app/helpers/account/booking_helper.rb
+    # M|config/locales/de.yml
+    # M|config/locales/en.yml
+    #CHANGED_FILES_WITH_GSB=$(git status -sb  | sed '1d' | sed 's/\ /\t/') # remove first line, #change space for tabs  --deprecated
+    # Replace 3th character if only these two characters are ' ' with characters |. REF: https://stackoverflow.com/questions/24469977/replace-particular-string-at-fixed-position-using-sed
+    #                                           #remove fist line   # change 0th char for ° # change 1st char for °  # change 2th char for |  # change ° for spaces
+    #CHANGED_FILES_WITH_GSB="""$(git status -sb | sed '1d' | sed 's/^\(.\{0\}\) /\1\°/' |  sed 's/^\(.\{1\}\) /\1\°/' | sed 's/^\(.\{2\}\) /\1|/' | sed 's/\°/\ /g')"""
+    # Assert list -deprecated
+    #  M|app/assets/stylesheets/bookings/confirmation.css
+    #  M|app/helpers/account/booking_helper.rb
+    # M |config/locales/de.yml
+    # M |config/locales/en.yml
+    CHANGED_FILES_WITH_GSB="""$(git status -sb | sed '1d' | sed 's/^\(.\{0\}\) /\1\°/' |  sed 's/^\(.\{1\}\) /\1\°/' | sed 's/^\(.\{2\}\) /\1|/' )"""
+    # Assert list -deprecated
+    # °M|app/assets/stylesheets/bookings/confirmation.css
+    # °M|app/helpers/account/booking_helper.rb
+    # M°|config/locales/de.yml
+    # M°|config/locales/en.yml
+
+    if [[ ! -z "${CHANGED_FILES_WITH_GSB}" ]] ; then
+    {
+        echo -e "${green}++++ ${yellow214}"
+        echo -e "${blue23} • ${blue30} Git Status - ${cyan} Pending to commit  ${reset}"
+        present_files "${CHANGED_FILES_WITH_GSB}"
+        #echo -e "${green}++++ ${yellow214}"
+
+
+    }
+    fi
+
+
+
+
+
+    #LAST_THREE_LOGS=$(git log -3 --stat | sed 's/^ /_/g'| sed 's/^_   /----/g' | grep '^----' | sed s/^'----'// | trim_start_space |xargs -I {} echo "LOG|{}")
+    LAST_THREE_LOGS=$(git log -3 --stat | sed 's/^ /_/g'| sed 's/^_   /----/g' | grep '^----' | sed s/^'----'// | trim_start_space |xargs -I {} echo "${green}+${blue30}-\033[38;5;153m {}")
+
+    if [[ ! -z "${LAST_THREE_LOGS}" ]] ; then
+    {
+        echo -e "${green}+${blue30}---- ${yellow214}"
+        echo -e "${green}+${blue30}-${blue23} • ${yellow214}Last 3 logs lines - ${cyan}   ${reset}"
+        echo -e "${LAST_THREE_LOGS}"
+        echo -e "${green}+${blue30}---- ${yellow214}"
+
+    }
+    fi
+
+    JUST_GIT_STATUS=$(echo "${CHANGED_FILES_WITH_GSB}" | xargs -I {} echo "${green}+${blue30}#${blue23} • ${yellow214} {}" | sed 's/°/ /g' | sed 's/[|]/ /g')
+    if [[ ! -z "${JUST_GIT_STATUS}" ]] ; then
+    {
+        echo -e "${green}+${blue30}#### ${yellow214}"
+        echo -e "${green}+${blue30}#${blue23} • ${yellow214} git status -sb   ${reset}"
+        echo -e "${JUST_GIT_STATUS}"
+        echo -e "${green}+${blue30}#### ${yellow214}"
+        echo -e "${green}++++ ${reset}"
+    }
+    fi
+} # end function commit_status_continue
+
+display_help() {
+    echo -e "\033[38;5;58m Usage:
+
+    commit blah blah wkajsdjkhasldfh lasdkjfhlaksjdhf asdfasfd    <---  to just send the commit message
+
+    or
+
+    commit filename blah blah blah measdkasjdhklasjhdfe askdjhfalksjh aslkdjhfas lkdfj   <---  add a file and send the commit message
+
+    no need for \" \"
+
+    "
+} # end function display_help
+
+inside_a_git_repo() {
+    local git_status=$(git status 2>&1 )  # Check and catch capture all stout sdout output, error will return 1 to $?)
+    if [[ "${git_status}" == *"Not a git repository"* ]] ; then
+    {
+        echo -e "${red}${git_status}${reset}"
+        return 1  # non zero exit means error
+    }
+    else
+    {
+        echo -e "${red}${git_status}${reset}"
+        return 0 # zero exit means no error
+    }
+    fi
+} # end function inside_a_git_repo
+
+
+## START ##
+
+if ( ! inside_a_git_repo  >/dev/null 2>&1 ) ; then
+{
+    exit 69; # CONTROLLED ERROR EXIT - NOT INSIDE A REPO
+}
+fi
+
+if  [[ -z "${1}" ]] ; then
+{
+    commit_status_continue
+    exit 69; # CONTROLLED ERROR EXIT - SHOW WORKLOAD AND EXIT - PASSED NO PARAMETERS
+}
+fi
+
+if         [[ ! -z "${1}" && "${1}" == "-h" ]] \
+    ||  [[ ! -z "${1}" && "${1}" == "--h" ]] \
+    ||  [[ ! -z "${1}" && "${1}" == "-help" ]] \
+    ||  [[ ! -z "${1}" && "${1}" == "--help" ]] \
+    ||  [[ ! -z "${1}" && "${1}" == "help" ]] ; then
+{
+    display_help
+    exit 69; # CONTROLLED ERROR EXIT - AFTER DISPLAYED HELP
+}
+fi
+scoop_filename_or_directory() {
+    local try_exists="${1}"
+    local FILENAME="${2}"
+    if [[ ! -z "${try_exists}" ]] && [[ -f "${try_exists}" || -d "${try_exists}/"  ]] ; then
+    {
+        FILENAME="${FILENAME}
+${try_exists}"
+        ADDFILE="SI"
+        OPTIONS=$(echo """${OPTIONS}""" | sed 's'"""${try_exists}"""'')  # remove filename from commit
+echo """ escooped ${try_exists}"""
+echo """${OPTIONS}"""
+    }
+    fi
+    echo "${FILENAME}"
+    echo "${OPTIONS}"
+} # end scoop_filename_or_directory
+
+it_looks_file_a_filename(){
+    local try_exists="${1}"
+    #local file_was_listed_as_deleted=$(file_was_deleted "${try_exists}")
+    #(( DEBUG_VERB_READING_LOGIC )) && ( file_was_deleted "${try_exists}" ) && echo " file_was_listed_as_deleted ${try_exists}"
+    if  [[ ! -z "${try_exists}" ]] ; then
+    {
+        if [[ -f "${try_exists}" || -d "${try_exists}/" ]] ; then
+        {
+            return 0
+        }
+        else
+        {
+            if ( file_was_deleted "${try_exists}" ) ; then
+            {
+                return 0
+            }
+            else
+            {
+                return 1
+            }
+            fi
+        }
+        fi
+    }
+    else
+    {
+        return 1
+    }
+    fi
+} # end it_looks_file_a_filename
+
+it_looks_file_a_preposition(){
+    local try_word="${1}"
+    local preposition="${2}"
+    # When Error "bash to lowercase '${,,}: bad substitution ' "
+    # ${preposition,,}: bad substitution error fix is to check for the current bash version in the shells file
+    # REF: https://stackoverflow.com/questions/29855489/string-replacement-to-lowercase-in-bash-4-3-33-bad-substitution-error
+    # Case 1.  - mac Problem
+    # ➜ bash --version                        # Seems to respond with correct version of 4 or older
+    #    GNU bash, version 4.4.5(1)-release (x86_64-apple-darwin16.3.0)
+    # ➜ echo "$BASH_VERSION"
+    #                                          # This variable seemed irrelevant since it returned empty value
+    # ➜ type bash
+    #    bash is /usr/local/bin/bash           # This appeared to be using my appointed bash version, so it seemed correct
+    #
+    # ➜ cat /etc/shells                       # Looking at this file, I could find this other bash "/bin/bash"
+    #    # List of acceptable shells for chpass(1).
+    #    # Ftpd will not allow users to connect who are not using
+    #    # one of these shells.
+    #
+    #    /bin/bash
+    #    /bin/csh
+    #    /bin/ksh
+    #    /bin/sh
+    #    /bin/tcsh
+    #    /bin/zsh
+    #
+    # ➜ /bin/bash --version                   # Asking this file version would yield the lower version, totally unexpected, but
+    #                                          #  totally guildty of this error '${,,}: bad substitution '
+    #    GNU bash, version 3.2.57(1)-release (x86_64-apple-darwin16)
+    #    Copyright (C) 2007 Free Software Foundation, Inc.
+    #
+    # ➜ sudo -e /etc/shells                   # So, I tried to rename it, But I was not allowed to, another problem in itself
+    #
+    # ➜ ls -la /bin/bash
+    #    -r-xr-xr-x 1 root wheel 626272 Apr 13 12:46 /bin/bash
+    #
+    # ➜ sudo mv /bin/bash /bin/bash_mac_original_deleted
+    #    mv: rename /bin/bash to /bin/bash_mac_original_deleted: Operation not permitted
+    #
+    # ➜ sudo mv /bin/bash /bin/bash_mac_original_deleted
+    #    mv: rename /bin/bash to /bin/bash_mac_original_deleted: Operation not permitted
+    #
+    # ➜ sudo passwd root
+    #    Changing password for root.
+    #      New password:
+    #      Retype new password:
+    # ➜ su
+    #    Password:
+    #    sh-3.2#  sudo mv /bin/bash /bin/bash_mac_original_deleted
+    #             mv: rename /bin/bash to /bin/bash_mac_original_deleted: Operation not permitted
+    #
+    #    sh-3.2#  sudo cp /bin/bash /bin/bash_mac_original_deleted
+    #             cp: /bin/bash_mac_original_deleted: Operation not permitted
+    #
+    #    sh-3.2#  cp /bin/bash /bin/bash_mac_original_deleted
+    #             cp: /bin/bash_mac_original_deleted: Operation not permitted
+    #
+    #
+    # ➜ sudo -e /etc/shells                   # So, I did the suggested edit to the file.
+    #    Password:
+    # ➜ su
+    #    Password:
+    #    sh-3.2# sudo mv /bin/bash /bin/bash_mac_original_deleted
+    #    sh-3.2# sudo -e /etc/shells
+    #    sh-3.2# exit
+    #
+    # Solution is to change the: #! from the script
+    #
+    #                     from    "#!/bin/bash"    to      "#!/usr/bin/env bash"
+        #
+    if [[ -z "${try_word}" ]]  ||  [[ -z "${preposition}" ]] ; then
+        {
+            return 1 # No, it does not look like a preposition, not enough data to compute
+        }
+        fi
+
+        # echo "preposition:${preposition}"
+        # exit 69;  DEBUG FOR PREPOSITION FAILING IN MAC OR FREEBSD OR BASH 3.2
+        if [[ "${BASH_VERSION}" > "4" ]] ; then
+        {
+        local lower_case_preposition="${preposition,,}"   # bash Convert string to lowercase Bash 4 REF: https://stackoverflow.com/questions/2264428/converting-string-to-lower-case-in-bash-shell-scripting
+        local upper_case_preposition="${preposition^^}"   # bash Convert string to uppercase Bash 4 REF: https://stackoverflow.com/questions/2264428/converting-string-to-lower-case-in-bash-shell-scripting
+        local capitalized_preposition="${preposition~}"   # bash Convert string to Toggled Bash 4 REF: https://stackoverflow.com/questions/2264428/converting-string-to-lower-case-in-bash-shell-scripting
+        }
+    else
+    {
+        local lower_case_preposition=$(echo "${preposition}" | sed 'y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/')   # bash Convert string to lowercase Bash 4 REF: https://stackoverflow.com/questions/2264428/converting-string-to-lower-case-in-bash-shell-scripting
+        local upper_case_preposition=$(echo "${preposition}" | sed 'y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/')    # bash Convert string to uppercase Bash 4 REF: https://stackoverflow.com/questions/2264428/converting-string-to-lower-case-in-bash-shell-scripting
+        local capitalized_preposition=$(echo "${preposition}" | sed -e "s/\b\(.\)/\u\1/g")  # Uppercasing First Letter of Words Using SED REF: https://stackoverflow.com/questions/1538676/uppercasing-first-letter-of-words-using-sed
+    }
+    fi
+    if [[ ! -z "${try_word}" ]] && [[ \
+           "${try_word}" == "${preposition}" \
+        || "${try_word}" == "${lower_case_preposition}"  \
+        || "${try_word}" == "${upper_case_preposition}"  \
+        || "${try_word}" == "${capitalized_preposition}" \
+         ]] ; then
+    {
+        return 0  # yes it looks like a preposition
+    }
+    else
+    {
+        return 1  # No it does not look like a preposition
+    }
+    fi
+} # end it_looks_file_a_preposition
+
+remove_string() {
+    sed 's'"""${1}"""''
+} # end remove_string
+
+remove_double_spaces() {
+    sed 's/  / /g'
+} #end remove_double_spaces
+
+remove_found_word_from_commit_message() {
+    local options="""${1}"""
+    local filename="""${2}"""
+    echo """${options}""" | remove_string "${filename}" | remove_double_spaces
+} # end  remove_found_word_from_commit_message
+
+try_preposition_and_remove_if_filename() {
+    # TEST CASES
+    # fixed in lange.sh the comments that were broken           ->  fixed the comments that were broken
+    # fixed in master the comments that were broken             ->  stays same
+    # fixed from master the comment that were broken            ->  stays same
+    # fixed doctores.csv from bréaking and taking more choices  ->  fixed from bréaking and taking more choices
+    #
+    # Sample Usage
+    # OPTIONS=$(try_preposition_and_remove_if_filename """${list of words}""" """${this_word}"""  """${next_word}""")
+    # OPTIONS=$(try_preposition_and_remove_if_filename """${OPTIONS}""" """${try_FILENAME1}"""  """${try_FILENAME2}""")
+
+
+    local options="""${1}"""
+    local try_word="""${2}"""
+    local try_filename="""${3}"""
+
+
+    local one_preposition=""
+    local prepositions="TO
+FROM
+IN"
+    #while read -r one_preposition; do
+    for one_preposition in "${prepositions}"; do
+    {
+      # if not empty
+      if [ ! -z "${one_preposition}" ] ; then
+      {
+            if ( it_looks_file_a_preposition "${try_word}" "${one_preposition}"  ) && ( it_looks_file_a_filename "${try_filename}" ) ; then
+            {
+                options=$(remove_found_word_from_commit_message """${options}""" """${try_word}""")  # remove the first TO
+            }
+            fi
+      }
+      fi
+    }
+    done
+    #done <<< "${prepositions}"
+    echo """${options}""" | remove_double_spaces
+} # end try_preposition_and_remove_if_filename
+
+
+perform_commit() {
+    # Sample use:
+    #           THIS_COMMIT_RESULTS=$(perform_commit """${ACTION} ${options}""")  # Check and catch capture all stout sdout output, error will return 1 to $?
+    #            if (( $? == 0 )) ;  then   # if error buffer if empty
+    #            {
+    #                (( DEBUG_VERB_READING_LOGIC )) && echo "no error"
+    #                commit_results="${commit_results}
+    # ${THIS_COMMIT_RESULTS}"
+    #            }
+    #            else
+    #            {
+    #                (( DEBUG_VERB_READING_LOGIC )) && echo "there was an error ${THIS_COMMIT_RESULTS} "
+    #                error="YES"
+    #                echo -e "${green}-${blue30} • ${red} ERROR ${yellow214} During commit of :${red}${ONE_FILENAME}${yellow214}: ${reset}"
+    #            }
+    #            fi
+    local options="""${1}"""
+    local THIS_COMMIT_RESULTS=""
+    (( DEBUG_VERB_READING_LOGIC )) && echo "Start perform_commit"
+    (( DEBUG_VERB_READING_LOGIC )) && echo "      options:${options}"
+    (( DEBUG_VERB_READING_LOGIC )) && continue_y_n
+    if [[ -z "${options}" ]] ; then
+    {
+        echo -e "${green}+${blue30}---- ${yellow214}"
+        echo -e "${green}+${blue30}-${blue23} • ${yellow214} You did not provided a commit message - Will not commit without one  ${reset}"
+        echo -e "${green}+${blue30}---- ${yellow214}"
+        echo -en "${green}+${blue30}\033[38;5;153mWould you like to provide one?"
+        #echo -n "How old are you? "
+        echo -en "${green}+${blue30}\033[38;5;153m"
+        read options
+        echo -e "${green}+${blue30}---- ${yellow214}"
+    }
+    fi
+    if [[ -z "${options}" ]] ; then
+    {
+        echo -e "${green}+${blue30}---- ${yellow214}"
+        echo -e "${green}+${blue30}-${blue23} • ${red} NO COMMIT MESSAGE PROVIDED  ${reset}"
+        echo -e "${green}+${blue30}---- ${yellow214}"
+    }
+    fi
+    if [[ ! -z "${options}" ]] ; then
+    {
+        (( DEBUG_VERB_READING_LOGIC )) &&  echo "    callling git commit -m \"${options}\" "
+        THIS_COMMIT_RESULTS=$(git commit -m """${options}"""; 2>&1 )  # Check and catch capture all stout sdout output, error will return 1 to $?
+        ERROR_HAPPENED=""
+        [[ "${PROCESSOR_ERROR}" == *"MAC"* ]] && [ $? != 0 ] && ERROR_HAPPENED="1"
+        [[ "${PROCESSOR_ERROR}" == *"INTEL"* ]] && (( $? != 0 )) && ERROR_HAPPENED="1"
+        if [ "${ERROR_HAPPENED}" ] ; then
+        # (( $? == 0 )) ;  then   # if error buffer if - is - empty, then there is not error
+        # (( $? != 0 )) ;  then   # if error buffer is  N O T empty, then there - is - error
+        {
+            (( DEBUG_VERB_READING_LOGIC )) && echo "there was an error during perform_commit()s "
+            echo "${THIS_COMMIT_RESULTS}"
+            return 1
+        }
+        else
+        {
+            (( DEBUG_VERB_READING_LOGIC )) && echo "no error during perform_commit()"
+            echo "${THIS_COMMIT_RESULTS}"
+            return 0
+        }
+        fi
+
+    }
+    fi
+
+
+} # end perform_commit
+
+say_what_I_removed() {
+    local options="""${1}"""
+    local try_word="""${2}"""
+    local idenfitier="""${3}"""
+    [[ -f "${ONE_FILENAME}" && ! -d "${ONE_FILENAME}/"  ]] && echo -e "This looks it is filename:${try_word}: is this filename.... $(ls -la ${try_word})"
+    [[ -f "${ONE_FILENAME}" &&  -d "${ONE_FILENAME}/"  ]] && echo -e "This looks it is directory:${try_word}: is this directoy.... $(ls -la ${try_word})"
+    [[ ! -f "${ONE_FILENAME}" && ! -d "${ONE_FILENAME}/"  ]] && echo -e "This looks it is deleted:${try_word}: if it was a file or dir "
+    echo """${idenfitier} OPTIONS: ${OPTIONS}"""
+} # end say_what_I_removed
+
+file_exists_remote() {
+    # Sample use:
+    #
+    # if  ( file_exists_remote "${CURBRANCH}" "${ONE_FILENAME}" ) ; then
+    # {
+    #
+    # }
+    # fi
+    local CURBRANCH="""${1}"""
+    local ONE_FILENAME="""${2}"""
+    local FILE_EXISTS_REMOTE=""
+            # Before going " git add -p" ... The FILENAME needs to exists  remotely or it will be error
+            FILE_EXISTS_REMOTE=$(git cat-file -e origin/"${CURBRANCH}":"${ONE_FILENAME}" 2>&1 )  # Check and catch capture all stout sdout output, error will return 1 to $?)
+            #test:  assert this variable has something with valid or error meesage in it:
+            #echo RESPONSE:"${FILE_EXISTS_REMOTE}";
+            if [[ "${FILE_EXISTS_REMOTE}" == *"Not a valid"* ]] ; then    #expectation of error: "fatal: Not a valid object name"
+            {
+                return 1
+            }
+            else
+            {
+                return 0
+            }
+            fi
+} # end file_exists_remote
+
+diff_shows_empty() {
+    local ONE_FILENAME="""${1}"""
+    local DID_STAGED_CHANGES_HAPPENED=""
+    local CHECK_GIT_STATUS=""
+
+            # Did commit happened ? If it did the  git  diff will return empty value
+            DID_STAGED_CHANGES_HAPPENED=$(git diff "${ONE_FILENAME}")
+            if [[ -z "${DID_STAGED_CHANGES_HAPPENED}" ]] ;  then
+            {
+                return 0  # empty result
+            }
+            else
+            {
+                return 1
+            }
+            fi
+} # end diff_shows_empty
+
+changes_added_to_commit() {
+    # Expected Status from Git structure to read:
+    # On branch master
+    # Your branch is ahead of 'origin/master' by 1 commit.
+    #   (use "git push" to publish your local commits)
+    # Changes to be committed:
+    #   (use "git reset HEAD <file>..." to unstage)
+    #
+    #     modified:   pull_all_subdirectories
+    #
+    # Changes not staged for commit:
+    #   (use "git add/rm <file>..." to update what will be committed)
+    #   (use "git checkout -- <file>..." to discard changes in working directory)
+    #
+    #     modified:   commit
+    #     deleted:    satisfied
+    #
+    # Untracked files:
+    #   (use "git add <file>..." to include in what will be committed)
+    #
+    #     newfile
+    #
+
+    local ONE_FILENAME="""${1}"""
+    local CHECK_GIT_STATUS=""
+    local to_be=""
+    local not_staged=""
+    local untracked=""
+
+
+            # Did commit happened ? If it did the  git  diff will return empty value
+            CHECK_GIT_STATUS=$(git status 2>&1)                                             # Check and catch capture all stout sdout output, error will return none 0 to $?)
+            #(( DEBUG_VERB_READING_LOGIC )) && echo " ******* changes_added_to_commit() ***** git status : ${CHECK_GIT_STATUS}"
+            CHECK_GIT_STATUS=$(echo "${CHECK_GIT_STATUS}" | sed '/(use/d' | trim_start_space)   # remove all the lines that have "(use"
+
+            (( DEBUG_VERB_READING_LOGIC )) && echo " +--------: git status trimmed : ${CHECK_GIT_STATUS}"
+            to_be="${CHECK_GIT_STATUS#*Changes to be committed:}"                           # bash expressions retain the part after "Changes to be committed:"
+            to_be="${to_be%Changes not staged for commit:*}"                                # bash expressions retain the part before "Changes not staged for commit:"
+            (( DEBUG_VERB_READING_LOGIC )) && echo " +--------:              to_be : $to_be"
+
+            not_staged="${CHECK_GIT_STATUS#*Changes not staged for commit:}"                # bash expressions retain the part after "Changes not staged for commit:"
+            not_staged="${not_staged%Untracked files:*}"                                    # bash expressions retain the part before "Untracked files:"
+            (( DEBUG_VERB_READING_LOGIC )) && echo " +--------:         not_staged : $not_staged"
+
+            untracked="${CHECK_GIT_STATUS#*Untracked files:}"                               # bash expressions retain the part after "Changes not staged for commit:"
+            untracked="${untracked%Untracked files:*}"                                      # bash expressions retain the part before "Untracked files:"
+            (( DEBUG_VERB_READING_LOGIC )) && echo " +--------:          untracked : $untracked"
+
+            scoop_files_modified=$(echo "${to_be}" | grep "modified:" | sed "s/modified://"  | trim_start_space | grep "${ONE_FILENAME}" )
+            scoop_files_newfile=$(echo "${to_be}" | grep "new file:" | sed "s/new file://"  | trim_start_space | grep "${ONE_FILENAME}" )
+            scoop_files_deleted=$(echo "${to_be}" | grep "deleted:" | sed "s/deleted://"  | trim_start_space | grep "${ONE_FILENAME}" )
+            (( DEBUG_VERB_READING_LOGIC )) && echo " +--------: scooped modi to_be : $scoop_files_modified"
+            (( DEBUG_VERB_READING_LOGIC )) && echo " +--------: scooped  new to_be : $scoop_files_newfile"
+            (( DEBUG_VERB_READING_LOGIC )) && echo " +--------: scooped  del to_be : $scoop_files_deleted"
+            if [[ -z "${scoop_files_modified}" ]] && [[ -z "${scoop_files_newfile}" ]] && [[ -z "${scoop_files_deleted}" ]]; then  # Not changed and not new and not deleted
+            {
+                return 1
+            }
+            fi
+
+            if [[ "${CHECK_GIT_STATUS}" == *"Changes to be committed:"* ]] && [[ "${scoop_files_modified}" == *"${ONE_FILENAME}"*  || "${scoop_files_newfile}" == *"${ONE_FILENAME}"* || "${scoop_files_deleted}" == *"${ONE_FILENAME}"* ]]  ;  then
+            {
+                return 0
+            }
+            else
+            {
+                return 1
+            }
+            fi
+} # end changes_added_to_commit
+
+
+get_list_of_deleted_files_not_commited() {
+    # Expected Status from Git structure to read:
+    # On branch master
+    # Your branch is ahead of 'origin/master' by 1 commit.
+    #   (use "git push" to publish your local commits)
+    # Changes to be committed:
+    #   (use "git reset HEAD <file>..." to unstage)
+    #
+    #     modified:   pull_all_subdirectories
+    #
+    # Changes not staged for commit:
+    #   (use "git add/rm <file>..." to update what will be committed)
+    #   (use "git checkout -- <file>..." to discard changes in working directory)
+    #
+    #     modified:   commit
+    #     deleted:    satisfied
+    #
+    # Untracked files:
+    #   (use "git add <file>..." to include in what will be committed)
+    #
+    #     newfile
+    #
+
+    local filenames="""${1}"""
+    local CHECK_GIT_STATUS=""
+    local not_staged=""
+    local scoop_files_deleted=""
+
+
+            # Did commit happened ? If it did the  git  diff will return empty value
+            CHECK_GIT_STATUS=$(git status 2>&1)                                             # Check and catch capture all stout sdout output, error will return none 0 to $?)
+            #(( DEBUG_VERB_READING_LOGIC )) && echo " ******* changes_added_to_commit() ***** git status : ${CHECK_GIT_STATUS}"
+            CHECK_GIT_STATUS=$(echo "${CHECK_GIT_STATUS}" | sed '/(use/d' | trim_start_space)   # remove all the lines that have "(use"
+
+            not_staged="${CHECK_GIT_STATUS#*Changes not staged for commit}"                # bash expressions retain the part after "Changes not staged for commit:"
+            not_staged="${not_staged%Untracked files:*}"                                    # bash expressions retain the part before "Untracked files:"
+            #(( DEBUG_VERB_READING_LOGIC )) && echo " +--------:         not_staged : $not_staged"
+
+            scoop_files_deleted=$(echo "${not_staged}" | grep "deleted:" | sed "s/deleted://"  | trim_start_space )
+            #(( DEBUG_VERB_READING_LOGIC )) && echo " +--------: scooped  del not_staged : $scoop_files_deleted"
+            if [[ ! -z "${scoop_files_deleted}" ]] ; then  # Not changed and not new and not deleted
+            {
+                filenames="${filenames}
+${scoop_files_deleted}"
+            }
+            fi
+            echo "${filenames}"
+
+} # end get_list_of_deleted_files_not_commited
+
+file_was_deleted() {
+    # Test:
+    #  file_was_deleted "added" && echo "deteled"
+    # Expected Status from Git structure to read:
+    # On branch master
+    # Your branch is ahead of 'origin/master' by 1 commit.
+    #   (use "git push" to publish your local commits)
+    # Changes to be committed:
+    #   (use "git reset HEAD <file>..." to unstage)
+    #
+    #     modified:   pull_all_subdirectories
+    #
+    # Changes not staged for commit:
+    #   (use "git add/rm <file>..." to update what will be committed)
+    #   (use "git checkout -- <file>..." to discard changes in working directory)
+    #
+    #     modified:   commit
+    #     deleted:    satisfied
+    #
+    # Untracked files:
+    #   (use "git add <file>..." to include in what will be committed)
+    #
+    #     newfile
+    #
+
+    local ONE_FILENAME="""${1}"""
+    local CHECK_GIT_STATUS=""
+    local not_staged=""
+    local scoop_files_deleted=""
+
+
+            # Did commit happened ? If it did the  git  diff will return empty value
+            CHECK_GIT_STATUS=$(git status 2>&1)                                             # Check and catch capture all stout sdout output, error will return none 0 to $?)
+            #(( DEBUG_VERB_READING_LOGIC )) && echo " ******* changes_added_to_commit() ***** git status : ${CHECK_GIT_STATUS}"
+            CHECK_GIT_STATUS=$(echo "${CHECK_GIT_STATUS}" | sed '/(use/d' | trim_start_space)   # remove all the lines that have "(use"
+
+            scoop_files_deleted=$(echo "${CHECK_GIT_STATUS}" | grep "deleted:" | sed "s/deleted://"  | trim_start_space | grep "${ONE_FILENAME}" )
+            #(( DEBUG_VERB_READING_LOGIC )) && echo " +--------: scooped  del not_staged : $scoop_files_deleted"
+            if [[ ! -z "${scoop_files_deleted}" ]] ; then  # Not changed and not new and not deleted  ---perhaps add...&& "${scoop_files_deleted}" == *"${ONE_FILENAME}"*
+            {
+                return 0
+            }
+            else
+            {
+                return 1
+            }
+            fi
+
+
+} # end file_was_deleted
+
+
+changes_got_staged_for_this_filename() {
+    local ONE_FILENAME="""${1}"""
+    (( DEBUG_VERB_READING_LOGIC )) && ( diff_shows_empty  "${ONE_FILENAME}"  )          && echo " +-------file:${ONE_FILENAME}:----- diff_shows_empty returned        true "
+    (( DEBUG_VERB_READING_LOGIC )) && ( ! diff_shows_empty  "${ONE_FILENAME}"  )        && echo " +-------file:${ONE_FILENAME}:----- diff_shows_empty returned        false "
+    (( DEBUG_VERB_READING_LOGIC )) && ( changes_added_to_commit  "${ONE_FILENAME}"  )   && echo " +-------file:${ONE_FILENAME}:----- changes_added_to_commit returned true "
+    (( DEBUG_VERB_READING_LOGIC )) && ( ! changes_added_to_commit  "${ONE_FILENAME}"  ) && echo " +-------file:${ONE_FILENAME}:----- changes_added_to_commit returned false "
+            if ( diff_shows_empty  "${ONE_FILENAME}"  ) && ( changes_added_to_commit  "${ONE_FILENAME}"  )   ;  then
+            {
+                return 0  # empty result
+            }
+            else
+            {
+                return 1
+            }
+            fi
+
+} # end did_changes_got_staged
+
+continue_y_n() {
+    read -p "CONTINUE Y/[N]: " reply
+    reply=${reply:-N}
+    echo $reply
+} # end continue_y_n
+
+get_stagging_commands_and_filenames() {
+    # Usage
+    #         get_stagging_commands_and_filenames
+    #
+    local ONE_FILENAME=""
+    local options="""${1}"""
+    local filenames="""${2}"""
+    #while read -r ONE_FILENAME; do
+    for ONE_FILENAME in "${filenames}"; do
+    {
+      # if not empty
+      if [ ! -z "${ONE_FILENAME}" ] ; then
+      {
+            if  ( file_exists_remote "${CURBRANCH}" "${ONE_FILENAME}" ) ; then
+            {
+                echo "git add -p ${ONE_FILENAME}"
+            }
+            else
+            {
+                echo "git add ${ONE_FILENAME}"
+            }
+            fi
+      }
+      fi
+    }
+    done
+    #done <<< "${filenames}"
+} # end get_stagging_commands_and_filenames
+
+file_exists_local() {
+    # Usage
+    #         file_exists_local "${ONE_FILENAME}"
+    #
+    local ONE_FILENAME="${1}"
+    if [[ -f "${ONE_FILENAME}" || -d "${ONE_FILENAME}/"  ]] ; then
+        return 0
+    else
+        return 1
+    fi
+} # end file_exists_local
+
+stage_and_commit_several_files() {
+    # Sample call
+    #           COMMIT_RESULTS=$(stage_and_commit_several_files """${OPTIONS}""" """${FILENAME}""")
+    #           if (( $? == 0 )) ;  then   # if error buffer if empty
+    #           {
+    #               Errror not happened
+    #           }
+    #
+    # Vars
+    # global DEBUG_VERB_READING_LOGIC,
+    # global ACTIONS
+    # global all colors
+    local ONE_FILENAME=""
+    local this_perform_commit=""
+    local this_total_commit_results=""
+    local error="NO"
+    local options="""${1}"""
+    local filenames="""${2}"""
+    (( DEBUG_VERB_READING_LOGIC )) && echo "Start stage_and_commit_several_files"
+    (( DEBUG_VERB_READING_LOGIC )) && echo "      options:${options}"
+    (( DEBUG_VERB_READING_LOGIC )) && echo "    filenames:${filenames}"
+    (( DEBUG_VERB_READING_LOGIC )) && echo $( continue_y_n )
+
+    for ONE_FILENAME in $filenames; do
+    #for ONE_FILENAME in "${filenames}"; do
+    #while read -r ONE_FILENAME; do    # This captures the stdin and does not allow other subprocesses to ask questions like git add -p will be ignored
+    {
+      # if not empty
+      if [ ! -z "${ONE_FILENAME}" ] ; then
+      {
+            (( DEBUG_VERB_READING_LOGIC )) && echo " +-- file name :${ONE_FILENAME}:"
+            (( DEBUG_VERB_READING_LOGIC )) && ( file_exists_local "${ONE_FILENAME}" )  && echo " +-- file_exists_local :${ONE_FILENAME}: said true it exists"
+            if  ( file_exists_remote "${CURBRANCH}" "${ONE_FILENAME}" ) && ( file_exists_local "${ONE_FILENAME}" ) ; then
+            {
+                (( DEBUG_VERB_READING_LOGIC )) && echo " +--- si file exists in remote branch :${ONE_FILENAME}:"
+                if ( diff_shows_empty "${ONE_FILENAME}" )  ; then
+                {
+                    (( DEBUG_VERB_READING_LOGIC )) && echo " +---  and git diffs shows empty means there are no changes to commit"
+                }
+                else
+                {
+                    (( DEBUG_VERB_READING_LOGIC )) && echo " +---  and git diffs shows differences ...adding"
+                    (( DEBUG_VERB_READING_LOGIC )) && echo "git add -p ${ONE_FILENAME}"
+                    #echo $(git add -p "${ONE_FILENAME}")
+                    git add -p "${ONE_FILENAME}"
+                }
+                fi
+
+            }
+            else
+            {
+                # File is new or deleted then add the change
+                (( DEBUG_VERB_READING_LOGIC )) && echo " +--- no file does not exists in remote branch :${ONE_FILENAME}:"
+                (( DEBUG_VERB_READING_LOGIC )) && echo "git add ${ONE_FILENAME}"
+                #echo $(git add "${ONE_FILENAME}")
+                git add "${ONE_FILENAME}"
+            }
+            fi
+(( DEBUG_VERB_READING_LOGIC )) && echo $( continue_y_n )
+            if  ( changes_got_staged_for_this_filename "${ONE_FILENAME}" ) ; then
+            {
+                (( DEBUG_VERB_READING_LOGIC )) && echo "CHANGES GOT STAGED FOR :${ONE_FILENAME}: ... so now running commit"
+                (( DEBUG_VERB_READING_LOGIC )) && continue_y_n
+
+                local MESSAGE_TO_COMMIT=$(echo """${ACTION} ${options}"""| remove_double_spaces )
+                this_perform_commit=$(perform_commit "${MESSAGE_TO_COMMIT}")
+                local ERROR_DID_NOT_HAPPENED=""
+                [[ "${PROCESSOR_ERROR}" == *"MAC"* ]] && [ $? == 0 ] && ERROR_DID_NOT_HAPPENED="1"
+                [[ "${PROCESSOR_ERROR}" == *"INTEL"* ]] && (( $? == 0 )) && ERROR_DID_NOT_HAPPENED="1"
+                if [ "${ERROR_DID_NOT_HAPPENED}" ] ;  then   # if error buffer if empty
+                {
+                    (( DEBUG_VERB_READING_LOGIC )) && echo "no error"
+                    this_total_commit_results="${this_total_commit_results}
+${this_perform_commit}"
+                }
+                else
+                {
+                    (( DEBUG_VERB_READING_LOGIC )) && echo "there was an error ${this_perform_commit} "
+                    error="YES"
+                    echo -e "${green}-${blue30} • ${red} ERROR ${yellow214} During commit of :${red}${ONE_FILENAME}${yellow214}: ${reset}"
+                }
+                fi
+            }
+            else
+            {
+                (( DEBUG_VERB_READING_LOGIC )) &&  echo -e "${green}-${blue30} • ${red} ERROR ${yellow214} CHANGES DID  not not not got STAGED FOR Stages did not happened. During adding of :${red}${ONE_FILENAME}${yellow214}: ${reset}"
+            }
+            fi
+      }
+      fi
+    }
+    #done <<< "${filenames}"
+    done
+    echo "${this_total_commit_results}"
+    COMMIT_RESULTS="${this_total_commit_results}"
+    if [[ "${error}" == "NO" ]] ;  then   # if error buffer if empty
+    {
+        return 0
+    }
+    else
+    {
+        return 1
+    }
+    fi
+} #end stage_and_commit_several_files
+
+perform_git_add(){
+    #   Sample use:
+    #               perform_git_add  $@
+    #
+    local MESSAGE=""
+    local OPTIONS=$@;
+    (( DEBUG_VERB_READING_LOGIC )) && echo """OPTIONS:${OPTIONS}"""
+    [[ ! -z "${ACTION}" ]] && local ACTION="""${ACTION}"""
+
+    local try_FILENAME1="${1}"  # if calling directly    I wrote then:  commit filename  message blah blah
+    local try_FILENAME2="${2}"  # if calling indirectly  I wrote then:  added  filename  message blah blah
+    local try_FILENAME3="${3}"  # if calling indirectly  I wrote then:  added  filename  message blah blah
+    local try_FILENAME4="${4}"  # if calling indirectly  I wrote then:  added  filename  message blah blah
+    local try_FILENAME5="${5}"  # if calling directly    I wrote then:  commit filename  message blah blah
+    local try_FILENAME6="${6}"  # if calling indirectly  I wrote then:  added  filename  message blah blah
+    local try_FILENAME7="${7}"  # if calling indirectly  I wrote then:  added  filename  message blah blah
+    local try_FILENAME8="${8}"  # if calling indirectly  I wrote then:  added  filename  message blah blah
+    local FILENAME=""
+    local ADDFILE="NO"
+    local ERROR="NO"
+    #local COMMIT_RESULTS=""
+    local THIS_COMMIT_RESULTS=""
+    local FILE_EXISTS_REMOTE=""
+    local DID_STAGED_CHANGES_HAPPENED=""
+
+    (( DEBUG_VERB_READING_LOGIC )) && echo  "ACTION:""${ACTION}"  # if calling directly    I wrote then:  commit filename  message blah blah
+    (( DEBUG_VERB_READING_LOGIC )) && echo  "0:""${0}"  # if calling directly    I wrote then:  commit filename  message blah blah
+    (( DEBUG_VERB_READING_LOGIC )) && echo  "try_FILENAME1:""${1}"  # if calling directly    I wrote then:  commit filename  message blah blah
+    (( DEBUG_VERB_READING_LOGIC )) && echo  "try_FILENAME2:""${2}"  # if calling indirectly  I wrote then:  added  filename  message blah blah
+    (( DEBUG_VERB_READING_LOGIC )) && echo  "try_FILENAME3:""${3}"  # if calling indirectly  I wrote then:  added  filename  message blah blah
+    (( DEBUG_VERB_READING_LOGIC )) && echo  "try_FILENAME4:""${4}"
+    (( DEBUG_VERB_READING_LOGIC )) && echo  "try_FILENAME5:""${5}"
+    (( DEBUG_VERB_READING_LOGIC )) && echo  "try_FILENAME6:""${6}"
+    (( DEBUG_VERB_READING_LOGIC )) && echo  "try_FILENAME7:""${7}"
+    (( DEBUG_VERB_READING_LOGIC )) && echo  "try_FILENAME8:""${8}"
+
+    local back_try_WORD=""
+    local COUNTER=0
+    local try_FILENAME=""
+    for try_FILENAME in ${@}; do
+    {
+
+        if ( it_looks_file_a_filename "${try_FILENAME}"  ) ; then
+        {
+            FILENAME="${FILENAME}
+${try_FILENAME}"
+            ADDFILE="SI"
+
+            OPTIONS=$(remove_found_word_from_commit_message """${OPTIONS}""" """${try_FILENAME}""")
+            (( DEBUG_VERB_READING_LOGIC )) && say_what_I_removed "${OPTIONS}" "${try_FILENAME}" $COUNTER
+        }
+        fi
+
+        [[ ! -z "${back_try_WORD}" ]] && OPTIONS=$(try_preposition_and_remove_if_filename """${OPTIONS}""" """${back_try_WORD}"""  """${try_FILENAME}""")
+
+        back_try_WORD="${try_FILENAME}"
+        (( COUNTER++ )) # if (( $COUNTER > 37 )) ; then
+    }
+    done
+
+
+    if [[ "${ADDFILE}" == "SI"  ]] ; then                    # commit one file, up to four files or 4 directories
+    {
+        (( DEBUG_VERB_READING_LOGIC )) && echo "addfile is si "
+
+        [[ -z "${FOUND_DIR_JOURNAL}" ]] && . journal_find_journal_dir
+        . $FOUND_DIR_JOURNAL/journal_get_bash_colors
+        [[ -z "${BRANCH_MERGE_AGAINST}" ]] && . $FOUND_DIR_JOURNAL/journal_get_branch_merge_against >/dev/null 2>&1;
+        [[ -z "${CURBRANCH}" ]] && . $FOUND_DIR_JOURNAL/journal_get_current_branch
+
+
+        FILENAME=$(get_list_of_deleted_files_not_commited "${FILENAME}" | uniq)
+
+        (( DEBUG_VERB_READING_LOGIC )) && echo "I found this file(s):\"${FILENAME}\""
+        (( DEBUG_VERB_READING_LOGIC )) && echo "I got this commit message(s):${OPTIONS}"
+        (( DEBUG_VERB_READING_LOGIC )) && continue_y_n
+
+        #STAGGING_COMMANDS=$(get_stagging_commands_and_filenames "${FILENAME}")
+        #stage_and_commit_several_files "${OPTIONS}" "${FILENAME}" "${STAGGING_COMMANDS}" | xargs -I {} COMMIT_RESULTS="{}"
+        #while read -e -t 0.1; do : ; done
+        #read -t 1 -n 10000 discard   # a way to clear stdin but (with bash) you can read and discard what is there before you ask for the input
+        stage_and_commit_several_files "${OPTIONS}" "${FILENAME}"
+        #COMMIT_RESULTS=$(xargs echo <<< command stage_and_commit_several_files """${OPTIONS}""" """${FILENAME}""" )
+        #COMMIT_RESULTS=$(export TERM=$TERM && stage_and_commit_several_files """${OPTIONS}""" """${FILENAME}""" )
+        #COMMIT_RESULTS=$(stage_and_commit_several_files """${OPTIONS}""" """${FILENAME}""" )
+        (( DEBUG_VERB_READING_LOGIC )) && (( $? == 0 )) && echo "buffer seems no error"
+        (( DEBUG_VERB_READING_LOGIC )) && (( $? != 0 )) && echo "buffer seems  error"
+        (( DEBUG_VERB_READING_LOGIC )) && echo $COMMIT_RESULTS
+        (( DEBUG_VERB_READING_LOGIC )) && exit 69; # DEBUG EXIT - WHEN $DEBUG_VERB_READING_LOGIC = 1
+        #if [[ ! -z "${COMMIT_RESULTS}" ]] ;  then   # if error buffer if empty
+        local ERROR_DID_NOT_HAPPENED=""
+        [[ "${PROCESSOR_ERROR}" == *"MAC"* ]] && [ $? == 0 ] && ERROR_DID_NOT_HAPPENED="1"
+        [[ "${PROCESSOR_ERROR}" == *"INTEL"* ]] && (( $? == 0 )) && ERROR_DID_NOT_HAPPENED="1"
+        if [ "${ERROR_DID_NOT_HAPPENED}" ] && [[ ! -z "${COMMIT_RESULTS}" ]]  ;  then   # if error buffer if empty
+        {
+            # if [[ "${ERROR}" == "NO" ]] ;  then   # if error buffer if empty
+            # {
+            (( ! DEBUG_VERB_READING_LOGIC )) &&    commit_status_continue
+            (( ! DEBUG_VERB_READING_LOGIC )) &&    display_commit_results "${COMMIT_RESULTS}"
+            # } else {
+            #    display_error_during_commit "${COMMIT_RESULTS}"
+            # }
+            # fi
+        } else {
+            (( ! DEBUG_VERB_READING_LOGIC )) && commit_status_continue
+        }
+        fi
+    } else {                                                                                # commit all the file changes
+        (( DEBUG_VERB_READING_LOGIC )) && echo "addfile is no so I will add all the files "
+        (( DEBUG_VERB_READING_LOGIC )) && echo "git add -p   ...# THIS IS FOR ALL FILES"
+        git add -p
+
+        COMMIT_RESULTS=$(perform_commit """${OPTIONS}""")
+        local ERROR_DID_NOT_HAPPENED=""
+        [[ "${PROCESSOR_ERROR}" == *"MAC"* ]] && [ $? == 0 ] && ERROR_DID_NOT_HAPPENED="1"
+        [[ "${PROCESSOR_ERROR}" == *"INTEL"* ]] && (( $? == 0 )) && ERROR_DID_NOT_HAPPENED="1"
+        if [ "${ERROR_DID_NOT_HAPPENED}" ]  ;  then   # if error buffer if empty
+        {
+            (( ! DEBUG_VERB_READING_LOGIC )) && commit_status_continue
+            (( ! DEBUG_VERB_READING_LOGIC )) && display_commit_results "${COMMIT_RESULTS}"
+        } else {
+            (( ! DEBUG_VERB_READING_LOGIC )) && display_error_during_commit "${COMMIT_RESULTS}"
+        }
+        fi
+    }
+    fi
+    echo -e "${green}+++++ ${yellow214}"
+
+} # end function perform_git_add
+
+display_commit_results() {
+    local COMMIT_RESULTS="${1}"
+    if [[ -z "${COMMIT_RESULTS}" ]] ;  then
+    {
+        echo -e "${green}+${blue30}---- ${yellow214}"
+        echo -e "${green}+${blue30}-${blue23} • ${yellow214} Commit Result  ${reset}"
+        echo -e "${green}+${blue30}---- ${yellow214}"
+        echo -e "${green}+${blue30}\033[38;5;153m$COMMIT_RESULTS"
+        echo -e "${green}+${blue30}\033[38;5;202m$(repeat_single_char_spacer " " $(( $COLUMNS - 25 )) ) ${yellow214}commit_undo_keep_files"
+        echo -e "${green}+${blue30}---- ${yellow214}"
+    }
+    fi
+}
+display_error_during_commit() {
+    local COMMIT_RESULTS="${1}"
+    if [[ -z "${COMMIT_RESULTS}" ]] ;  then
+    {
+        echo -e "${green}+${blue30} • ${red} Error during commit Result  ${reset}"
+        echo -e "${green}+${blue30}${red}---- ${yellow214}"
+        echo -e "${green}+${blue30}\033[38;5;153m$COMMIT_RESULTS"
+        echo -e "${green}+${blue30}${red}---- ${yellow214}"
+    }
+    fi
+}
+
+check_bash_version_required() {
+    if [[ "${BASH_VERSION}" < "4" ]] ; then
+        echo "Bash Version does not accept Bash Expressions like ,, ^^"
+        ~}
+    fi
+}
+
+#
+# C H E C K   H O W   C O M P U T E R   H A N D L E S   E R R O R S   --Start
+#
+test_positives(){
+  KIND=""
+  ls werwerwerwerwerwerwerwerwerwerwerr >/dev/null 2>&1;
+  if (( $? == 0 )) ;  then  # Intel processor
+    KIND="INTEL"
+  fi
+  if [ $? == 0 ]; then   # Mac Intel processor
+    KIND="${KIND}MAC"
+  fi
+  echo "${KIND}"
+}
+PROCESSOR_ERROR=$(test_positives)
+# DEBUG MACPOSITIVE MACPOSITIVE echo "${MACPOSITIVE}"
+# DEBUG MACPOSITIVE exit 1
+#
+# C H E C K   H O W   C O M P U T E R   H A N D L E S   E R R O R S   --End
+#
+
+
+#Using ACTION FROM VERBS SET IN action_template will take precedence ... at least that is the idea
+[[ -z "${THISSCRIPTNAME}" ]] && THISSCRIPTNAME=`basename "$0"`
+[[ ! -z "${ACTION}" ]] && THISSCRIPTNAME="${ACTION}"
+
+# Globals
+COMMIT_RESULTS=""
+DEBUG_VERB_READING_LOGIC=0
+perform_git_add $@
+

@@ -1,0 +1,98 @@
+#!/bin/bash
+#
+# @author Zeus Intuivo <zeus@intuivo.com>
+#
+
+#colors
+[[ -z "${CYAN}" ]] && CYAN="\\033[38;5;123m"
+[[ -z "${PURPLE_BLUE}" ]] && PURPLE_BLUE="\\033[38;5;93m"
+[[ -z "${GRAY241}" ]] && GRAY241="\\033[38;5;241m"
+[[ -z "${YELLOW226}" ]] && YELLOW226="\\033[38;5;226m"
+[[ -z "${RESET}" ]] && RESET="\\033[0m"
+[[ -z "${RED}" ]] && RED="\\033[38;5;1m"
+[[ -z "${BRIGHT_BLUE87}" ]] && BRIGHT_BLUE87="\\033[38;5;87m"
+
+[[ -z "${GIT_USER_NAME}" ]] && GIT_USER_NAME=$(command git config user.name 2> /dev/null)
+
+
+
+#KEY?
+    if [[ "${PWD}" == *"clis"* ]] ; then
+      if [[ "${GIT_USER_NAME}" != *"zeusintuivo"* ]] ; then
+        sshswitchkey zeus ;
+        GIT_USER_NAME=$(command git config user.name 2> /dev/null)
+      fi
+    else
+      LOAD_TEMP_KEYS="# Empty script"
+      if [ -f .temp_keys ] ; then
+        LOAD_TEMP_KEYS=$(<.temp_keys)
+        eval "${LOAD_TEMP_KEYS}"
+        if [[ ! -z "${SSH_KEY}" ]] && [[ "${GITUSER}" != "${GIT_USER_NAME}" ]] ; then
+          sshswitchkey "${SSH_KEY}"
+          GIT_USER_NAME=$(command git config user.name 2> /dev/null)
+        fi
+      fi
+    fi
+#
+# C H E C K   H O W   C O M P U T E R   H A N D L E S   E R R O R S   --Start
+#
+test_positives(){
+  KIND=""
+  ls werwerwerwerwerwerwerwerwerwerwerr >/dev/null 2>&1;
+  if (( $? == 0 )) ;  then  # Intel processor
+    KIND="INTEL"
+  fi
+  if [ $? == 0 ]; then   # Mac Intel processor
+    KIND="${KIND}MAC"
+  fi
+  echo "${KIND}"
+}
+PROCESSOR_ERROR=$(test_positives)
+# DEBUG MACPOSITIVE MACPOSITIVE echo "${MACPOSITIVE}"
+# DEBUG MACPOSITIVE exit 1
+#
+# C H E C K   H O W   C O M P U T E R   H A N D L E S   E R R O R S   --End
+#
+
+#branchname
+PUSH_CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD);
+
+test_project_part=$(projectparticipation)
+if [[ "${test_project_part}" == *" 1 ${GIT_USER_NAME}"* ]] ; then
+{
+  echo -e "${BRIGHT_BLUE87} Are you sure? It appears there is a ${RED} 1 commit ${BRIGHT_BLUE87} for${RED}${BRIGHT_BLUE87} ${GIT_USER_NAME}  ${YELLOW226}!!!  ${RESET}"
+  echo -e "${BRIGHT_BLUE87}  ${RED} I am stoppping you before you contaminate this with another user.  ${YELLOW226} You can run 'undocommit' though !!!  ${RESET}"
+  exit 69;
+}
+fi
+#push
+echo -e "${PURPLE_BLUE} === ${GRAY241} ${GIT_USER_NAME} ${PURPLE_BLUE} pushes to ${CYAN} ${PUSH_CURRENT_BRANCH} ${PURPLE_BLUE} === ${GRAY241} ";
+
+push_result=$(git push origin "${PUSH_CURRENT_BRANCH}"  2>&1 )  # Check and catch capture all stout sdout output, error will return 1 to $?)
+ERROR_HAPPENED=""
+[[ "${PROCESSOR_ERROR}" == *"MAC"* ]] && [ $? != 0 ] && ERROR_HAPPENED="1"
+[[ "${PROCESSOR_ERROR}" == *"INTEL"* ]] && (( $? != 0 )) && ERROR_HAPPENED="1"
+if [ "${ERROR_HAPPENED}" ]  || \
+  [[ "${push_result}" == *"Could not resolve"* ]] || \
+  [[ "${push_result}" == *"Repository not found"* ]] || \
+  [[ "${push_result}" == *"Could not read from"* ]] || \
+  [[ "${push_result}" == *"fatal"* ]] || \
+  [[ "${push_result}" == *"FAILED"* ]] || \
+  [[ "${push_result}" == *"failed"* ]] || \
+  [[ "${push_result}" == *"error"* ]] || \
+  [[ "${push_result}" == *"ERROR"* ]] || \
+  [[ "${push_result}" == *"denied"* ]] \
+  ; then
+{
+  echo -e "${PURPLE_BLUE} push ${RED}Failed ${YELLOW226}!!!  ${RESET}"
+  [[ "${push_result}" == *"Could not resolve"* ]] && echo -e "${BRIGHT_BLUE87} It appears YOU HAVE ${YELLOW226}NO INTERNET CONNECTION \o_0/ ${RESET}"
+  [[ "${push_result}" == *"Repository not found"* ]] && echo -e "${BRIGHT_BLUE87} It appears YOU HAVE ${YELLOW226}NO ACCESS TO THIS FOR YOU ${RED} ${GIT_USER_NAME} ${RESET}"
+  [[ "${push_result}" == *"Could not read from"* ]] && echo -e "${BRIGHT_BLUE87} It appears YOU HAVE ${YELLOW226}IF IT EXISTS YOU ARE NOT ALLOWED ${RED} ${GIT_USER_NAME} ${YELLOW226}!!! ${RESET}"
+  echo -e "${RESET}${push_result}  "
+  exit 69;
+}
+fi
+
+#projectparticipation
+
+echo -e "${test_project_part}"

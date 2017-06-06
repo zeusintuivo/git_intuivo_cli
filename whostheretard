@@ -1,0 +1,46 @@
+#!/bin/bash
+# 
+# @author Zeus Intuivo <zeus@intuivo.com>
+#
+# whostheretard - Who is responsible for a given line of code? Wrapper
+# for git blame that targets a specific line and extracts author name.
+# 
+# usage:
+#   whostheretard <file> <line>
+
+red=`tput setaf 1`
+cyan=`tput setaf 6`
+blue23=`tput setaf 23`
+blue33=`tput setaf 33`
+blue30=`tput setaf 33`
+gray238=`tput setaf 238`
+yellow220=`tput setaf 220`
+green=`tput setaf 2`
+reset=`tput sgr0`
+
+THISSCRIPTNAME=`basename "$0"`
+
+
+
+if [[ -z "$1"  ]] ; then  # if argument was not passed
+    echo "${reset} ${THISSCRIPTNAME}  ${blue23}-${blue30} Who is responsible for a given line of code?   
+                    Wrapper for git blame that targets a specific line and extracts author name."    
+    echo ""
+    echo "${red} missing arguments:  ${blue23}  ${reset}"
+    echo ""
+    echo ""
+    echo "${red} Usage: ${reset}"
+    echo ""
+    echo "${blue23} Call: ${reset}"
+    echo "${blue30}            ${THISSCRIPTNAME} whostheretard <file> <line>    ${reset}"
+    echo ""
+    echo ""
+    echo ""
+    exit 0;
+fi 
+
+NAME=$(git blame $1 | head -n $2 | tail -n 1 | ruby -ne 'puts $1 if $_=~/\((.*?) 20\d\d-\d\d-\d\d/')
+echo $NAME is the retard
+#say $NAME is the weetawd
+
+

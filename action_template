@@ -1,0 +1,69 @@
+#!/bin/bash
+#
+# @author Zeus Intuivo <zeus@intuivo.com>
+# @action
+#
+
+# check to see if I used a message, then it will behave as a put
+#bash shell script check input argument
+
+# set working directory as the scripts location during the execution of script
+# cd "$(dirname "$0")"
+
+sshswitchkey_and_commit_here() {
+
+  [[ -z "${GIT_USER_NAME}" ]] && GIT_USER_NAME=$(command git config user.name 2> /dev/null)
+
+#KEY?
+    if [[ "${PWD}" == *"clis"* ]] ; then   # forcing my own config here
+      if [[ "${GIT_USER_NAME}" != *"zeusintuivo"* ]] ; then
+        sshswitchkey zeus ;
+        GIT_USER_NAME=$(command git config user.name 2> /dev/null)
+      fi
+      put "${ACTION}" "$*" ;
+    else
+      LOAD_TEMP_KEYS="# Empty script"
+      if [ -f .temp_keys ] ; then
+        LOAD_TEMP_KEYS=$(<.temp_keys)
+        eval "${LOAD_TEMP_KEYS}"
+        if [[ ! -z "${SSH_KEY}" ]] && [[ "${GITUSER}" != "${GIT_USER_NAME}" ]] ; then
+          sshswitchkey "${SSH_KEY}"
+          GIT_USER_NAME=$(command git config user.name 2> /dev/null)
+        fi
+        # If the ..temp file provides for  JOURNAL_PUT_COMMIT_METHOD then use it otherwise default to commit action
+        #Extra commit
+        if [[ ! -z "${JOURNAL_PUT_COMMIT_METHOD}" ]] ; then
+          "${JOURNAL_PUT_COMMIT_METHOD}" "$*" ;
+        else
+          commit "${ACTION}" "$*" ;
+        fi
+      else
+        commit "${ACTION}" "$*" ;   # this is the default action if the file .temp_keys does not exists
+      fi
+    fi
+
+
+} # end sshswitchkey_and_commit_here
+
+export ACTION=`basename "$0"`
+
+# check operation systems
+
+  if [[ "$(uname)" == "Darwin" ]] ; then
+    # Do something under Mac OS X platform
+    #put "${ACTION} $*" ;
+    sshswitchkey_and_commit_here "$*"
+
+  elif [[ "$(expr substr $(uname -s) 1 5)" == "Linux" ]] ; then
+    # Do something under GNU/Linux platform
+    #put "${ACTION} $*" ;
+    sshswitchkey_and_commit_here "$*"
+
+  elif [[ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]] ; then
+    # Do something under Windows NT platform
+    # nothing here
+    #put "${ACTION} $*" ;
+    sshswitchkey_and_commit_here "$*"
+
+  fi
+

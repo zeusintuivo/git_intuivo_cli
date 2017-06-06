@@ -1,0 +1,404 @@
+#!/bin/bash
+#
+# @author Zeus Intuivo <zeus@intuivo.com>
+# @actioner
+
+# set working directory as the scripts location during the execution of script
+# un comment to pin to a especific dir
+# comment out and allow to work globally
+# cd "$(dirname "$0")"
+
+[[ -z "${GIT_USER_NAME}" ]] && GIT_USER_NAME=$(command git config user.name 2> /dev/null)
+
+#KEY?
+    if [[ "${PWD}" == *"clis"* ]] ; then
+      if [[ "${GIT_USER_NAME}" != *"zeusintuivo"* ]] ; then
+        sshswitchkey zeus ;
+        GIT_USER_NAME=$(command git config user.name 2> /dev/null)
+      fi
+    else
+      LOAD_TEMP_KEYS="# Empty script"
+      if [ -f .temp_keys ] ; then
+        LOAD_TEMP_KEYS=$(<.temp_keys)
+        eval "${LOAD_TEMP_KEYS}"
+        if [[ ! -z "${SSH_KEY}" ]] && [[ "${GITUSER}" != "${GIT_USER_NAME}" ]] ; then
+          sshswitchkey "${SSH_KEY}"
+          GIT_USER_NAME=$(command git config user.name 2> /dev/null)
+        fi
+      fi
+    fi
+
+#colors
+[[ -z "${CYAN}" ]] && CYAN="\\033[38;5;123m"
+[[ -z "${PURPLE_BLUE}" ]] && PURPLE_BLUE="\\033[38;5;93m"
+[[ -z "${GRAY241}" ]] && GRAY241="\\033[38;5;241m"
+[[ -z "${YELLOW226}" ]] && YELLOW226="\\033[38;5;226m"
+[[ -z "${RESET}" ]] && RESET="\\033[0m"
+[[ -z "${RED}" ]] && RED="\\033[38;5;1m"
+[[ -z "${BRIGHT_BLUE87}" ]] && BRIGHT_BLUE87="\\033[38;5;87m"
+
+#
+# C H E C K   H O W   C O M P U T E R   H A N D L E S   E R R O R S   --Start
+#
+test_positives(){
+  KIND=""
+  ls werwerwerwerwerwerwerwerwerwerwerr >/dev/null 2>&1;
+  if (( $? == 0 )) ;  then  # Intel processor
+    KIND="INTEL"
+  fi
+  if [ $? == 0 ]; then   # Mac Intel processor
+    KIND="${KIND}MAC"
+  fi
+  echo "${KIND}"
+}
+PROCESSOR_ERROR=$(test_positives)
+# DEBUG MACPOSITIVE MACPOSITIVE echo "${MACPOSITIVE}"
+# DEBUG MACPOSITIVE exit 1
+#
+# C H E C K   H O W   C O M P U T E R   H A N D L E S   E R R O R S   --End
+#
+
+
+#Using ACTION FROM VERBS SET IN action_template will take precedence ... at least that is the idea
+[[ -z "${THISSCRIPTNAME}" ]] && THISSCRIPTNAME=`basename "$0"`
+[[ ! -z "${ACTION}" ]]       && THISSCRIPTNAME="${ACTION}"
+
+if ( [[ -z "${ACTION}" ]] && [ -z "${2}" ] ) || \
+  ( [[ "${THISSCRIPTNAME}" == "${ACTION}" ]]  && [ -z "${1}" ] ); then
+{
+  echo
+  echo -e "
+  ${RED}
+  === ${BRIGHT_BLUE87} hey! ${GIT_USER_NAME} ${RED} ERROR ${CYAN}
+  ${GRAY241}
+   Usage
+
+     ${BRIGHT_BLUE87} I am sure you can say more than just ${RED}'${ACTION}${1}'${BRIGHT_BLUE87}. Be more creative
+
+  ${GRAY241}
+      or
+      if working with issue-base (issueput)
+
+               Verbage format
+              ...has not format !!! ---You don't need quotes either
+               Unlimited        ${BRIGHT_BLUE87}  $THISSCRIPTNAME  changes to the script that I worked on
+${GRAY241}
+               (issueput) format
+               2 Parameters     ${BRIGHT_BLUE87}  $THISSCRIPTNAME  ${CYAN} time       ${PURPLE_BLUE} \"message\"
+                                ${BRIGHT_BLUE87}  $THISSCRIPTNAME  ${CYAN} \"00:22\"  ${PURPLE_BLUE} \"fixed bug on deploy\"
+
+      ${GRAY241}
+      ${GRAY241}                   1st    ${CYAN} time:   0:22, 0:01, 0:10, 0:09, 1:30,
+      ${GRAY241}                   2nd    ${PURPLE_BLUE} message: Any message text for the commit
+
+  ${RED}
+  === ${GRAY241} ";
+  exit 69;
+}
+fi
+#reponame
+# ref: http://stackoverflow.com/questions/8190392/is-there-a-git-command-that-returns-the-current-project-name
+[[ -z "${GIT_USER_NAME}" ]] && GIT_USER_NAME=$(command git config user.name 2> /dev/null)
+echo -e "${PURPLE_BLUE} Hi! ${CYAN} ${GIT_USER_NAME} "
+[[ -z "${REPONAME}" ]] && REPONAME=$(git config --local remote.origin.url|sed -n 's#.*/\([^.]*\)\.git#\1#p');
+#branchname
+[[ -z "${BRANCHNAME}" ]] && BRANCHNAME=$(git rev-parse --abbrev-ref HEAD);
+
+
+#Attempt to run the issue for issueput
+# 1. Decompose $@ to parts
+ALL_ARGS=$(echo "${@}" | sed 's@ @\n@g')
+REST_ARGS=""
+COUNTER=0
+FIRST_AS_SCRIPT_NAME_CALLER=""
+SECOND_AS_FIRST_ARG=""
+THIRD_AS_SECOND_ARG=""
+
+while read -r ONE_ARG; do
+{
+  # if not empty
+  if [ ! -z "${ONE_ARG}" ] ; then
+  {
+    (( COUNTER++ ))
+    if (( COUNTER == 1 )) ; then
+    {
+      FIRST_AS_SCRIPT_NAME_CALLER="${ONE_ARG}"
+      REST_ARGS="${ONE_ARG}"
+    }
+    elif (( COUNTER == 2 )) ; then
+    {
+      SECOND_AS_FIRST_ARG="${ONE_ARG}"
+    }
+    elif (( COUNTER == 3 )) ; then
+    {
+      THIRD_AS_SECOND_ARG="${ONE_ARG}"
+      REST_ARGS="${REST_ARGS} ${ONE_ARG}"
+    }
+    else
+    {
+      REST_ARGS="${REST_ARGS} ${ONE_ARG}"
+    }
+    fi
+  }
+  fi
+}
+done <<< "${ALL_ARGS}"
+
+#:test   expected to find thins as they are called in by their names
+#echo "REST_ARGS                  :$REST_ARGS"
+#echo "COUNTER                    :$COUNTER"
+#echo "FIRST_AS_SCRIPT_NAME_CALLER:$FIRST_AS_SCRIPT_NAME_CALLER"
+#echo "SECOND_AS_FIRST_ARG        :$SECOND_AS_FIRST_ARG"
+#echo "THIRD_AS_SECOND_ARG        :$THIRD_AS_SECOND_ARG"
+
+#issue put stop
+if [[ "${BRANCHNAME}" == "issue-"* ]] ; then
+{
+  if ! command -v issueput >/dev/null 2>&1; then
+  {
+    echo
+    echo -e "
+    ${RED}
+    === ${BRIGHT_BLUE87} hey! ${GIT_USER_NAME} ${RED} ERROR issueput NOT FOUND ${CYAN}
+
+      Looks that you are using issue-*NAME convention with journal_intuivo_cli
+      ${BRIGHT_BLUE87}but ${RED}issueput  ${CYAN} and ${RED} issuecommit ${BRIGHT_BLUE87} are not installed  ${RED} !!!!
+    ${RED}  or available in the environment
+    === ${GRAY241} ";
+    echo
+    exit 69;
+  }
+  fi
+
+  if [ -z "${SECOND_AS_FIRST_ARG}" ] || [ -z "${THIRD_AS_SECOND_ARG}" ] ; then   # emtpy either
+  {
+    echo
+    NEW_ARGUMENTS=$(echo "${@}" | sed  s"${FIRST_AS_SCRIPT_NAME_CALLER}"g)
+    echo -e "
+    ${RED}
+    === ${BRIGHT_BLUE87} hey! ${GIT_USER_NAME} ${RED} ERROR DID NOT PASS ANY ARGUMENTS !!!${CYAN}
+
+    You Provided me with this:
+      1:${SECOND_AS_FIRST_ARG}
+      2:${THIRD_AS_SECOND_ARG}
+      @:${@}
+
+      Looks that you are using issue-*NAME convention with journal_intuivo_cli
+      ${BRIGHT_BLUE87}use ${CYAN} instead ${BRIGHT_BLUE87} issueput  ${CYAN} and ${BRIGHT_BLUE87} issuecommit
+    ${RED}
+    === ${BRIGHT_BLUE87} ${RED} ERROR Instead I need this:${BRIGHT_BLUE87}
+
+      1:${THISSCRIPTNAME}
+      2:...time ${RED}...time  ..time you spend doing this like ${BRIGHT_BLUE87} this 0:5
+      @:${NEW_ARGUMENTS}
+
+      ${RED} so say 5 minutes? May I suggest: ${BRIGHT_BLUE87}
+
+      ${THISSCRIPTNAME}  0:5 fixed an issue with ${NEW_ARGUMENTS}
+      ${THISSCRIPTNAME}  0:5 ${NEW_ARGUMENTS} and resolved conflicts
+
+    ${RED}
+    === Here are the help docs from issuput ${GRAY241} ";
+    echo
+    issueput  #calling issueput with no argument to trigger help message
+    exit 69;
+  }
+  fi
+
+  if [ ! -z "${SECOND_AS_FIRST_ARG}" ] && [ ! -z "${THIRD_AS_SECOND_ARG}" ] ; then # not empty
+  {
+
+    # REF: https://stackoverflow.com/questions/18731346/validate-date-format-in-a-shell-script
+    SIMPLE_TIME="${SECOND_AS_FIRST_ARG}"
+    TIME_TOOK=$(date "+%H:%M" -d "${SECOND_AS_FIRST_ARG}" 2>&1 )  # Check and get a valid date time format,capture all output, error will return 1 to $?
+    ERROR_HAPPENED=""
+    [[ "${PROCESSOR_ERROR}" == *"MAC"* ]] && [ $? != 0 ] && ERROR_HAPPENED="1"
+    [[ "${PROCESSOR_ERROR}" == *"INTEL"* ]] && (( $? != 0 )) && ERROR_HAPPENED="1"
+    if [ "${ERROR_HAPPENED}" ]  ;  then
+    {
+      #contains format 00:00
+      echo
+
+      GET_ERROR=$(echo "${TIME_TOOK}"| sed "s@‘@\'@g" |  sed "s@’@\'@g" | cut -d"'" -f2)
+      E_ERROR=$(echo -e "${RED}${GET_ERROR}${CYAN}")
+      ERR_MESSAGE=$(echo "
+      ${RED}
+      === ${BRIGHT_BLUE87} hey! ${GIT_USER_NAME} ${RED} ERROR  MISSING TIME OR INCORRECT FORMAT !${CYAN}
+
+        ERROR IS:${GET_ERROR} in
+
+        ${CYAN}time            ${RED}= ${BRIGHT_BLUE87}${TIME_TOOK}${CYAN}
+        ${CYAN}total arguments ${RED}= ${BRIGHT_BLUE87}${@}${CYAN}
+
+
+        format is wrong please provide valid time it took on this commit for issueput
+      ${RED}
+      === ${GRAY241} " | sed 's/'"${GET_ERROR}"'/'"${E_ERROR}"'/g')
+      echo -e "${ERR_MESSAGE}"
+      echo
+      exit 69;
+    }
+    fi
+
+    MESSAGE_ACTIONS_TAKEN="${THIRD_AS_SECOND_ARG}"
+    if [ -z "${MESSAGE_ACTIONS_TAKEN}" ] ; then    # empty message
+    {
+      echo
+      echo -e "
+      ${RED}
+      === ${BRIGHT_BLUE87} hey! ${GIT_USER_NAME} ${RED} ERROR NO MESSAGE! ${CYAN}
+
+        ${CYAN}message ${RED}= ${BRIGHT_BLUE87}${MESSAGE_ACTIONS_TAKEN}${CYAN}
+
+        message is empty and you need to write that you did, actions taken etc.
+      ${RED}
+      === ${GRAY241} ";
+      echo
+      exit 69;
+    }
+    fi
+    #echo "calling issueput"
+
+    #:test
+    #date "+%H:%M" -d "${SECOND_AS_FIRST_ARG}"
+    #echo "SECOND_AS_FIRST_ARG:${SECOND_AS_FIRST_ARG}"
+    #echo "TIME_TOOK:${TIME_TOOK}"
+    #echo "REST_ARGS:${REST_ARGS}"
+    #call issue put
+    issueput "${TIME_TOOK}" "${REST_ARGS}"
+    #echo "exit"
+
+    exit
+
+  }
+  fi
+
+
+}
+fi
+
+# Else... proceed to do regular put commit if issueput catch above does not engage
+
+#add
+#echo
+echo -e "${PURPLE_BLUE} === ${GRAY241} ${GIT_USER_NAME} ${PURPLE_BLUE} adds '-all' to ${CYAN} ${BRANCHNAME} ${PURPLE_BLUE} === ${GRAY241} ";
+#echo
+add_result=$(git add -A 2>&1 )  # Check and catch capture all stout sdout output, error will return 1 to $?)
+
+
+    if [[ -f "commit_exception.list" ]] && command -v unstage_exception_list >/dev/null 2>&1; then
+    {
+      #unstage
+      echo
+      echo -e "${PURPLE_BLUE} === ${GRAY241} ${GIT_USER_NAME} ${PURPLE_BLUE} unstages * from ${CYAN} ${BRANCHNAME} ${PURPLE_BLUE} === ${GRAY241} ";
+      echo
+      if [[ "$(uname)" == "Darwin" ]] ; then
+        # Do something under Mac OS X platform
+        unstage_exception_list ;
+
+      elif [[ "$(expr substr $(uname -s) 1 5)" == "Linux" ]] ; then
+        # Do something under GNU/Linux platform
+        ./unstage_exception_list ;
+
+      elif [[ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]] ; then
+        # Do something under Windows NT platform
+        unstage_exception_list ;
+        # nothing here
+      fi
+    }
+    fi
+
+
+#status
+#echo
+echo -e "${PURPLE_BLUE} === ${GRAY241} ${GIT_USER_NAME} ${PURPLE_BLUE} shows status for ${CYAN} ${BRANCHNAME} ${PURPLE_BLUE} === ${GRAY241} ";
+#echo
+    if ( command -v gsb >/dev/null 2>&1 ) ; then
+      gsb
+    elif ( command -v status >/dev/null 2>&1 ); then
+      status
+    else
+      git status;
+    fi
+
+#echo
+
+test_project_part=$(projectparticipation 2>&1 )
+if [[ "${test_project_part}" != *"${GIT_USER_NAME}"* ]] ; then
+{
+  echo -e "${BRIGHT_BLUE87} EEEEeeek! You are  ${RED} NOT${BRIGHT_BLUE87} on the list of${RED} participants history${BRIGHT_BLUE87} for this project${PURPLE_BLUE}:${YELLOW226}${GIT_USER_NAME}${PURPLE_BLUE}:  ${YELLOW226}!!!  ${RESET}"
+  echo -e "${BRIGHT_BLUE87}  ${YELLOW226} I am ${RED}stoppping you ${YELLOW226}before you contaminate this with another user.  ${RESET}"
+  echo -e "${RED} - DID NOT COMMIT - ${RESET}"
+  exit 69;
+}
+fi
+
+# From Execute Command
+        escape_single_quotes() {
+            sed "s/'/\\\'/g"
+        }
+        escape_double_quotes() {
+            sed 's/\"/\\\"/g'
+        }
+        escape_more_than() {
+            sed s/""">"""/\\\>/g
+        }
+        escape_less_than() {
+            sed s/"""<"""/\\\</g
+        }
+        escape_slashes() {
+            sed 's/\//\\\//g'
+        }
+        escape_bangs() {
+            sed 's/\!/\\\!/g'
+        }
+        escape_dots() {
+            sed 's/\./\\\./g'
+        }
+escape_for_options_sequence() {
+    escape_double_quotes | \
+    escape_less_than | escape_more_than | \
+    escape_slashes  | escape_single_quotes | \
+    escape_bangs | escape_dots
+}
+
+#commit
+OPTIONS="$*";
+[[ ! -z "${ACTION}" ]] && [[ "${1}" != "${ACTION}" ]] && OPTIONS="${ACTION} ${OPTIONS}";
+#echo
+echo -e "${PURPLE_BLUE} === ${GRAY241} ${GIT_USER_NAME} ${PURPLE_BLUE} commits -with_message '${BRIGHT_BLUE87}${OPTIONS}${PURPLE_BLUE}' === ${GRAY241} ";
+#echo
+commit_result=$(git commit -m "$OPTIONS"; 2>&1 )  # Check and catch capture all stout sdout output, error will return 1 to $?)
+OPTIONS=$(echo "$*" | escape_for_options_sequence);
+test_result=$(echo "${commit_result}" | sed 's/'"""${OPTIONS}"""'//g')  # Remove its own commit message while testing
+ERROR_HAPPENED=""
+[[ "${PROCESSOR_ERROR}" == *"MAC"* ]] && [ $? != 0 ] && ERROR_HAPPENED="1"
+[[ "${PROCESSOR_ERROR}" == *"INTEL"* ]] && (( $? != 0 )) && ERROR_HAPPENED="1"
+if [ "${ERROR_HAPPENED}" ]  || \
+  [[ "${test_result}" == *"Could not resolve"* ]] || \
+  [[ "${test_result}" == *"Repository not found"* ]] || \
+  [[ "${test_result}" == *"Could not read from"* ]] || \
+  [[ "${test_result}" == *"fatal"* ]] || \
+  [[ "${test_result}" == *"FAILED"* ]] || \
+  [[ "${test_result}" == *"failed"* ]] || \
+  [[ "${test_result}" == *"error"* ]] || \
+  [[ "${test_result}" == *"ERROR"* ]] || \
+  [[ "${test_result}" == *"denied"* ]] \
+  ; then
+{
+  echo -e "${PURPLE_BLUE} commmit ${RED}Failed ${YELLOW226}!!!  ${RESET}"
+  [[ "${commit_result}" == *"Could not resolve"* ]] && echo -e "${BRIGHT_BLUE87} It appears YOU HAVE ${YELLOW226}NO INTERNET CONNECTION \o_0/ ${RESET}"
+  [[ "${commit_result}" == *"Repository not found"* ]] && echo -e "${BRIGHT_BLUE87} It appears YOU HAVE ${YELLOW226}NO ACCESS TO THIS FOR YOU ${RED} ${GIT_USER_NAME} ${RESET}"
+  [[ "${commit_result}" == *"Could not read from"* ]] && echo -e "${BRIGHT_BLUE87} It appears YOU HAVE ${YELLOW226}IF IT EXISTS YOU ARE NOT ALLOWED ${RED} ${GIT_USER_NAME} ${YELLOW226}!!! ${RESET}"
+  echo -e "${RESET}${commit_result}  "
+  exit 69;
+}
+fi
+#echo
+
+#pull
+pull
+
+#push
+push
+echo

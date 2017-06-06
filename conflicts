@@ -1,0 +1,38 @@
+#!/bin/bash
+#
+# @author Zeus Intuivo <zeus@intuivo.com>
+#
+#bash shell script
+
+red=`tput setaf 1`
+cyan=`tput setaf 6`
+green=`tput setaf 2`
+reset=`tput sgr0`
+
+SEEKER="./ack";
+IGNORE_COMMAND="ignore";
+
+msg_red () {
+    printf "\n${bdr}%s ${off}%s\n" "$@"
+}
+
+trap '{ msg_red " KEYBOARD INTERRUPT."; exit 69; }' INT
+
+SEEKING="<<<<<< HEAD";
+
+# check operation systems
+
+if [[ "$(uname)" == "Darwin" ]] ; then
+  # Do something under Mac OS X platform
+  nur "${SEEKING}" "$1";
+
+elif [[ "$(expr substr $(uname -s) 1 5)" == "Linux" ]] ; then
+  # Do something under GNU/Linux platform
+  nur "${SEEKING}" "$1";
+
+elif [[ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]] ; then
+  # Do something under Windows NT platform
+  nur "${SEEKING}" "$1";
+  # nothing here
+fi
+

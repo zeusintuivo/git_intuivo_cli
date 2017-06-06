@@ -1,0 +1,43 @@
+#!/bin/bash
+#
+# @author Zeus Intuivo <zeus@intuivo.com>
+#
+
+# check to see if I used a message, then it will behave as a put 
+#bash shell script check input argument
+
+# set working directory as the scripts location during the execution of script 
+# cd "$(dirname "$0")"
+
+THISSCRIPTNAME=`basename "$0"`
+
+#bash shell script check input argument. Missing 1st first argument
+if [ -z "$1" ]
+  then
+    echo " Does something like this:  "
+    echo " git clone git@github.com:zeusintuivo/symfony-intuivo-cli.git --branch master --single-branch --depth 1"
+    echo " "
+  echo "Sample Usage:    - expects one argument "
+  echo " "
+  echo "    ${THISSCRIPTNAME} repository to clone "
+  echo "    ";
+  exit 0;
+fi
+
+# check operation systems 
+(
+  if [[ "$(uname)" == "Darwin" ]] ; then 
+    # Do something under Mac OS X platform    
+      git clone $1 --branch master --single-branch --depth 1
+  
+  elif [[ "$(expr substr $(uname -s) 1 5)" == "Linux" ]] ; then 
+    # Do something under GNU/Linux platform
+    git clone $1 --branch master --single-branch --depth 1
+  
+  elif [[ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]] ; then 
+    # Do something under Windows NT platform
+    git clone $1 --branch master --single-branch --depth 1
+    # nothing here
+  fi 
+)
+ 

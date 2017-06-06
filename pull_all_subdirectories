@@ -1,0 +1,52 @@
+#!/bin/bash
+#
+# @author Zeus Intuivo <zeus@intuivo.com>
+#
+#
+.each() {
+  local local_actions="${1}"
+  local local_items="${2}"
+  local one_item
+  local one_action
+  local action
+
+  while read -r one_item; do
+  {
+    if [ ! -z "${one_item}" ] ; then  # if not empty
+    {
+      while read -r one_action; do
+      {
+        if [ ! -z "${one_action}" ] ; then  # if not empty
+        {
+          action="${one_action/\{\#\}/$one_item}"  # replace value inside string substitution expresion bash
+          eval ${action}
+        }
+        fi
+      }
+      done <<< "${local_actions}"
+    }
+    fi
+  }
+  done <<< "${local_items}"
+}
+
+GET_ALL_SUBDIRS=$(find * -maxdepth 0 -type d | egrep -v "\.git")
+
+CURDIR="${PWD}"
+ACTIONS="echo -e \".\"
+echo \" \"
+echo \"Subdirectory:\"
+echo \". \"
+echo \". . . . . . .       {#} \"
+cd \"${CURDIR}/{#}\"
+pwd
+[[ -d .git/ ]] && pull
+"
+cd "${CURDIR}"
+
+# Perform all actions in
+#        LIST1
+#          for each element in
+#                           LIST2
+.each  "${ACTIONS}"   "${GET_ALL_SUBDIRS}"
+
