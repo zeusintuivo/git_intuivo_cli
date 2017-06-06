@@ -1,0 +1,3 @@
+export SSH_KEY="zeus"
+export GITUSER="zeusintuivo"
+export JOURNAL_PUT_COMMIT_METHOD="put"
