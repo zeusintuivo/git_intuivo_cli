@@ -776,13 +776,9 @@ IN"
       # if not empty
       if [ ! -z "${one_preposition}" ] ; then
       {
-            if ( words_match_insensitively "${try_word}" "${one_preposition}"  ) && ( it_looks_file_a_filename "${try_filename}" ) ; then
+            if ( words_match_insensitively "${try_word}" "${one_preposition}"  ) && ( it_looks_file_a_filename "${try_filename}" ) && ( ! is_an_exception "${try_filename}"  ); then
             {
-                if ( ! is_an_exception "${try_filename}"   ) ; then
-                {
-                    options=$(remove_found_word_from_commit_message """${options}""" """${try_word}""")  # remove the first TO
-                }
-                fi
+                options=$(remove_found_word_from_commit_message """${options}""" """${try_word}""")  # remove the first TO
             }
             fi
       }
