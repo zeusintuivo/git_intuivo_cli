@@ -713,7 +713,7 @@ remove_found_word_from_commit_message() {
 
 is_an_exception() {
     # Sample use
-    #             ( is_an_exception "${try_word}" "${one_exception}" ) && echo "hola"
+    #             ( is_an_exception "${try_word}" ) && echo "hola"
     #             if ( is_an_exception "${try_word}"   ) ; then
     #                 {
     #                     return 0  # yes it looks like exception
@@ -723,6 +723,8 @@ is_an_exception() {
     #                     return 1  # no it looks like is NOT exception
     #                 }
     #             fi
+    #             ( is_an_exception "test" ) && echo "this is an exception"
+    #             ( ! is_an_exception "test" ) && echo "this is NOT an exception"
     local try_word="""${1}"""
     local exceptions="DB
 TEST
@@ -737,14 +739,14 @@ FEATURE
       {
         if ( words_match_insensitively "${try_word}" "${one_exception}"  ) ; then
         {
-            return 0  # yes it looks like is an exception
+            return 1  # yes it looks like is an exception
         }
         fi
       }
       fi
     }
     done
-    return 1; # no it looks like is NOT an exception. not found in list
+    return 0; # no it looks like is NOT an exception. not found in list
 } # end is_an_exception
 
 try_preposition_and_remove_if_filename() {
@@ -776,7 +778,7 @@ IN"
       {
             if ( words_match_insensitively "${try_word}" "${one_preposition}"  ) && ( it_looks_file_a_filename "${try_filename}" ) ; then
             {
-                if ( ! is_an_exception "${try_word}"   ) ; then
+                if ( ! is_an_exception "${try_filename}"   ) ; then
                 {
                     options=$(remove_found_word_from_commit_message """${options}""" """${try_word}""")  # remove the first TO
                 }
