@@ -576,6 +576,16 @@ it_looks_file_a_filename(){
 } # end it_looks_file_a_filename
 
 words_match_insensitively(){
+    # Sample use
+    #             if ( words_match_insensitively "${try_word}" "${one_preposition}"  ) ; then
+    #                 {
+    #                     return 0  # yes it looks like preposition
+    #                 }
+    #             else
+    #                 {
+    #                     return 1  # no it looks like is NOT preposition
+    #                 }
+    #             fi
     local try_word="${1}"
     local preposition="${2}"
     # When Error "bash to lowercase '${,,}: bad substitution ' "
@@ -694,12 +704,25 @@ remove_double_spaces() {
 } #end remove_double_spaces
 
 remove_found_word_from_commit_message() {
+    # Sample use
+    #
     local options="""${1}"""
     local filename="""${2}"""
     echo """${options}""" | remove_string "${filename}" | remove_double_spaces
 } # end  remove_found_word_from_commit_message
 
 is_an_exception() {
+    # Sample use
+    #             ( is_an_exception "${try_word}" "${one_exception}" ) && echo "hola"
+    #             if ( is_an_exception "${try_word}"   ) ; then
+    #                 {
+    #                     return 0  # yes it looks like exception
+    #                 }
+    #             else
+    #                 {
+    #                     return 1  # no it looks like is NOT exception
+    #                 }
+    #             fi
     local try_word="""${1}"""
     local exceptions="DB
 TEST
@@ -714,15 +737,15 @@ FEATURE
       {
         if ( words_match_insensitively "${try_word}" "${one_exception}"  ) ; then
         {
-            return 0  # yes it looks like is_an_exception
+            return 0  # yes it looks like is an exception
         }
         fi
       }
       fi
     }
     done
-    return 0;
-} #end is_an_exception
+    return 1; # no it looks like is NOT an exception. not found in list
+} # end is_an_exception
 
 try_preposition_and_remove_if_filename() {
     # TEST CASES
@@ -753,8 +776,11 @@ IN"
       {
             if ( words_match_insensitively "${try_word}" "${one_preposition}"  ) && ( it_looks_file_a_filename "${try_filename}" ) ; then
             {
-                if [[ "${try_filename}" == "test" ]]
-                options=$(remove_found_word_from_commit_message """${options}""" """${try_word}""")  # remove the first TO
+                if ( ! is_an_exception "${try_word}"   ) ; then
+                {
+                    options=$(remove_found_word_from_commit_message """${options}""" """${try_word}""")  # remove the first TO
+                }
+                fi
             }
             fi
       }
