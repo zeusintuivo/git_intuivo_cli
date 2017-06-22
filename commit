@@ -1317,7 +1317,7 @@ ${try_FILENAME}"
         (( DEBUG_VERB_READING_LOGIC )) && echo "git add -p   ...# THIS IS FOR ALL FILES"
         git add -p
 
-        COMMIT_RESULTS=$(perform_commit """${OPTIONS}""")
+        COMMIT_RESULTS=$(perform_commit """${ACTION} ${OPTIONS}""")
         local ERROR_DID_NOT_HAPPENED=""
         [[ "${PROCESSOR_ERROR}" == *"MAC"* ]] && [ $? == 0 ] && ERROR_DID_NOT_HAPPENED="1"
         [[ "${PROCESSOR_ERROR}" == *"INTEL"* ]] && (( $? == 0 )) && ERROR_DID_NOT_HAPPENED="1"
