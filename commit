@@ -575,7 +575,7 @@ it_looks_file_a_filename(){
     fi
 } # end it_looks_file_a_filename
 
-it_looks_file_a_preposition(){
+words_match_insensitively(){
     local try_word="${1}"
     local preposition="${2}"
     # When Error "bash to lowercase '${,,}: bad substitution ' "
@@ -641,10 +641,10 @@ it_looks_file_a_preposition(){
     #    sh-3.2# sudo -e /etc/shells
     #    sh-3.2# exit
     #
-    # Solution is to change the: #! from the script
+    # Solution is to change the: #! from the script   to  use a more newer bash vesion
     #
     #                     from    "#!/bin/bash"    to      "#!/usr/bin/env bash"
-        #
+    #
     if [[ -z "${try_word}" ]]  ||  [[ -z "${preposition}" ]] ; then
         {
             return 1 # No, it does not look like a preposition, not enough data to compute
@@ -656,12 +656,14 @@ it_looks_file_a_preposition(){
         if [[ "${BASH_VERSION}" > "4" ]] ; then
         {
         local lower_case_preposition="${preposition,,}"   # bash Convert string to lowercase Bash 4 REF: https://stackoverflow.com/questions/2264428/converting-string-to-lower-case-in-bash-shell-scripting
+        local lower_case_try_word="${try_word,,}"         # bash Convert string to lowercase Bash 4 REF: https://stackoverflow.com/questions/2264428/converting-string-to-lower-case-in-bash-shell-scripting
         local upper_case_preposition="${preposition^^}"   # bash Convert string to uppercase Bash 4 REF: https://stackoverflow.com/questions/2264428/converting-string-to-lower-case-in-bash-shell-scripting
         local capitalized_preposition="${preposition~}"   # bash Convert string to Toggled Bash 4 REF: https://stackoverflow.com/questions/2264428/converting-string-to-lower-case-in-bash-shell-scripting
         }
     else
     {
-        local lower_case_preposition=$(echo "${preposition}" | sed 'y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/')   # bash Convert string to lowercase Bash 4 REF: https://stackoverflow.com/questions/2264428/converting-string-to-lower-case-in-bash-shell-scripting
+        local lower_case_preposition=$(echo "${preposition}" | sed 'y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/')    # bash Convert string to lowercase Bash 4 REF: https://stackoverflow.com/questions/2264428/converting-string-to-lower-case-in-bash-shell-scripting
+        local lower_case_try_word=$(echo "${try_word}" | sed 'y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/')          # bash Convert string to lowercase Bash 4 REF: https://stackoverflow.com/questions/2264428/converting-string-to-lower-case-in-bash-shell-scripting
         local upper_case_preposition=$(echo "${preposition}" | sed 'y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/')    # bash Convert string to uppercase Bash 4 REF: https://stackoverflow.com/questions/2264428/converting-string-to-lower-case-in-bash-shell-scripting
         local capitalized_preposition=$(echo "${preposition}" | sed -e "s/\b\(.\)/\u\1/g")  # Uppercasing First Letter of Words Using SED REF: https://stackoverflow.com/questions/1538676/uppercasing-first-letter-of-words-using-sed
     }
@@ -669,18 +671,19 @@ it_looks_file_a_preposition(){
     if [[ ! -z "${try_word}" ]] && [[ \
            "${try_word}" == "${preposition}" \
         || "${try_word}" == "${lower_case_preposition}"  \
+        || "${lower_case_try_word}" == "${lower_case_preposition}"  \
         || "${try_word}" == "${upper_case_preposition}"  \
         || "${try_word}" == "${capitalized_preposition}" \
          ]] ; then
     {
-        return 0  # yes it looks like a preposition
+        return 0  # yes it looks like words match
     }
     else
     {
-        return 1  # No it does not look like a preposition
+        return 1  # No it does not look like words match
     }
     fi
-} # end it_looks_file_a_preposition
+} # end words_match_insensitively
 
 remove_string() {
     sed 's'"""${1}"""''
@@ -696,12 +699,37 @@ remove_found_word_from_commit_message() {
     echo """${options}""" | remove_string "${filename}" | remove_double_spaces
 } # end  remove_found_word_from_commit_message
 
+is_an_exception() {
+    local try_word="""${1}"""
+    local exceptions="DB
+TEST
+SCRIPT
+SERVICE
+FEATURE
+"
+    for one_exception in "${exceptions}"; do
+    {
+      # if not empty
+      if [ ! -z "${one_exception}" ] ; then
+      {
+        if ( words_match_insensitively "${try_word}" "${one_exception}"  ) ; then
+        {
+            return 0  # yes it looks like is_an_exception
+        }
+        fi
+      }
+      fi
+    }
+    done
+    return 0;
+} #end is_an_exception
+
 try_preposition_and_remove_if_filename() {
     # TEST CASES
-    # fixed in lange.sh the comments that were broken           ->  fixed the comments that were broken
-    # fixed in master the comments that were broken             ->  stays same
-    # fixed from master the comment that were broken            ->  stays same
-    # fixed doctores.csv from bréaking and taking more choices  ->  fixed from bréaking and taking more choices
+    # fixed in lange.sh the comments that were broken           ->  changes to -> fixed the comments that were broken          <- where -> in lange.sh, was removed because   ->  "lange.sh" file was found , "in" was a preposition before the removed filename
+    # fixed in master the comments that were broken             ->  stays same ->  ==                                          <- where -> every keyword matched no filename  ->   ==
+    # fixed from master the comment that were broken            ->  stays same ->  ==                                          <- where -> every keyword matched no filename  ->   ==
+    # fixed doctores.csv from bréaking and taking more choices  ->  changes to ->  fixed from bréaking and taking more choices <- where -> doctores.csv, was removed because  ->  "doctores.csv" file was found
     #
     # Sample Usage
     # OPTIONS=$(try_preposition_and_remove_if_filename """${list of words}""" """${this_word}"""  """${next_word}""")
@@ -723,8 +751,9 @@ IN"
       # if not empty
       if [ ! -z "${one_preposition}" ] ; then
       {
-            if ( it_looks_file_a_preposition "${try_word}" "${one_preposition}"  ) && ( it_looks_file_a_filename "${try_filename}" ) ; then
+            if ( words_match_insensitively "${try_word}" "${one_preposition}"  ) && ( it_looks_file_a_filename "${try_filename}" ) ; then
             {
+                if [[ "${try_filename}" == "test" ]]
                 options=$(remove_found_word_from_commit_message """${options}""" """${try_word}""")  # remove the first TO
             }
             fi
