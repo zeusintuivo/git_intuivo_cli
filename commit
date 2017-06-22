@@ -1300,7 +1300,7 @@ perform_git_add(){
     for try_FILENAME in ${@}; do
     {
 
-        if ( it_looks_file_a_filename "${try_FILENAME}"  ) ; then
+        if ( it_looks_file_a_filename "${try_FILENAME}"  ) && ( ! is_an_exception "${try_filename}"  ); then
         {
             FILENAME="${FILENAME}
 ${try_FILENAME}"
