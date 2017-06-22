@@ -32,8 +32,15 @@ sshswitchkey_and_commit_here() {
         fi
         # If the ..temp file provides for  JOURNAL_PUT_COMMIT_METHOD then use it otherwise default to commit action
         #Extra commit
-        if [[ ! -z "${JOURNAL_PUT_COMMIT_METHOD}" ]] ; then
-          "${JOURNAL_PUT_COMMIT_METHOD}" "$*" ;
+        if [[ ! -z "${JOURNAL_PUT_COMMIT_METHOD}" ]]; then
+          if [[ "${JOURNAL_PUT_COMMIT_METHOD}" == "put" || "${JOURNAL_PUT_COMMIT_METHOD}" == "commit" ]] ; then
+            "${JOURNAL_PUT_COMMIT_METHOD}" "$*" ;
+          else
+            echo "  - It appear file .temp_keys is corrupted. I am expecting …put^ or …commit^"
+            echo "    as values. I have received :"${JOURNAL_PUT_COMMIT_METHOD}":  - "
+            echo "    Attemping execution anyways "
+            "${JOURNAL_PUT_COMMIT_METHOD}" "$*" ;
+          fi
         else
           commit "${ACTION}" "$*" ;
         fi
