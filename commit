@@ -833,7 +833,7 @@ perform_commit() {
     if [[ ! -z "${options}" ]] ; then
     {
         (( DEBUG_VERB_READING_LOGIC )) &&  echo "    callling git commit -m \"${options}\" "
-        THIS_COMMIT_RESULTS=$(git commit -m """${options}"""; 2>&1 )  # Check and catch capture all stout sdout output, error will return 1 to $?
+        THIS_COMMIT_RESULTS=$(git commit -m """${options}""" 2>&1 )  # Check and catch capture all stout sdout output, error will return 1 to $?
         ERROR_HAPPENED=""
         [[ "${PROCESSOR_ERROR}" == *"MAC"* ]] && [ $? != 0 ] && ERROR_HAPPENED="1"
         [[ "${PROCESSOR_ERROR}" == *"INTEL"* ]] && (( $? != 0 )) && ERROR_HAPPENED="1"
