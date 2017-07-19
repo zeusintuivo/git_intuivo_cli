@@ -114,9 +114,10 @@ echo -e "${PURPLE_BLUE} === ${GRAY241} ${GIT_USER_NAME} ${PURPLE_BLUE} fetches f
             else
               fetch_result=$(git fetch 2>&1 )  # Check and catch capture all stout sdout output, error will return 1 to $?)
           fi
+          err_buff=$?
             ERROR_HAPPENED=""
-            [[ "${PROCESSOR_ERROR}" == *"MAC"* ]] && [ $? != 0 ] && ERROR_HAPPENED="1"
-            [[ "${PROCESSOR_ERROR}" == *"INTEL"* ]] && (( $? != 0 )) && ERROR_HAPPENED="1"
+            [[ "${PROCESSOR_ERROR}" == *"MAC"* ]] && [ $err_buff != 0 ] && ERROR_HAPPENED="1"
+            [[ "${PROCESSOR_ERROR}" == *"INTEL"* ]] && (( $err_buff != 0 )) && ERROR_HAPPENED="1"
             if [ "${ERROR_HAPPENED}" ]  || \
               [[ "${fetch_result}" == *"Could not resolve"* ]] || \
               [[ "${fetch_result}" == *"Repository not found"* ]] || \
@@ -173,9 +174,10 @@ echo -e "${PURPLE_BLUE} === ${GRAY241} ${GIT_USER_NAME} ${PURPLE_BLUE} pulls fro
 
         }
         fi
+        err_buff=$?
             ERROR_HAPPENED=""
-            [[ "${PROCESSOR_ERROR}" == *"MAC"* ]] && [ $? != 0 ] && ERROR_HAPPENED="1"
-            [[ "${PROCESSOR_ERROR}" == *"INTEL"* ]] && (( $? != 0 )) && ERROR_HAPPENED="1"
+            [[ "${PROCESSOR_ERROR}" == *"MAC"* ]] && [ $err_buff != 0 ] && ERROR_HAPPENED="1"
+            [[ "${PROCESSOR_ERROR}" == *"INTEL"* ]] && (( $err_buff != 0 )) && ERROR_HAPPENED="1"
             if [ "${ERROR_HAPPENED}" ]  || \
               [[ "${pull_result}" == *"Could not resolve"* ]] || \
               [[ "${pull_result}" == *"Repository not found"* ]] || \

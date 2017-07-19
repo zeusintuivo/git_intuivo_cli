@@ -834,9 +834,10 @@ perform_commit() {
     {
         (( DEBUG_VERB_READING_LOGIC )) &&  echo "    callling git commit -m \"${options}\" "
         THIS_COMMIT_RESULTS=$(git commit -m """${options}""" 2>&1 )  # Check and catch capture all stout sdout output, error will return 1 to $?
+        err_buff=$?
         ERROR_HAPPENED=""
-        [[ "${PROCESSOR_ERROR}" == *"MAC"* ]] && [ $? != 0 ] && ERROR_HAPPENED="1"
-        [[ "${PROCESSOR_ERROR}" == *"INTEL"* ]] && (( $? != 0 )) && ERROR_HAPPENED="1"
+        [[ "${PROCESSOR_ERROR}" == *"MAC"* ]] && [ $err_buff != 0 ] && ERROR_HAPPENED="1"
+        [[ "${PROCESSOR_ERROR}" == *"INTEL"* ]] && (( $err_buff != 0 )) && ERROR_HAPPENED="1"
         if [ "${ERROR_HAPPENED}" ] ; then
         # (( $? == 0 )) ;  then   # if error buffer if - is - empty, then there is not error
         # (( $? != 0 )) ;  then   # if error buffer is  N O T empty, then there - is - error
@@ -1218,9 +1219,10 @@ stage_and_commit_several_files() {
 
                 local MESSAGE_TO_COMMIT=$(echo """${ACTION} ${options}"""| remove_double_spaces )
                 this_perform_commit=$(perform_commit "${MESSAGE_TO_COMMIT}")
+                err_buff=$?
                 local ERROR_DID_NOT_HAPPENED=""
-                [[ "${PROCESSOR_ERROR}" == *"MAC"* ]] && [ $? == 0 ] && ERROR_DID_NOT_HAPPENED="1"
-                [[ "${PROCESSOR_ERROR}" == *"INTEL"* ]] && (( $? == 0 )) && ERROR_DID_NOT_HAPPENED="1"
+                [[ "${PROCESSOR_ERROR}" == *"MAC"* ]] && [ $err_buff == 0 ] && ERROR_DID_NOT_HAPPENED="1"
+                [[ "${PROCESSOR_ERROR}" == *"INTEL"* ]] && (( $err_buff == 0 )) && ERROR_DID_NOT_HAPPENED="1"
                 if [ "${ERROR_DID_NOT_HAPPENED}" ] ;  then   # if error buffer if empty
                 {
                     (( DEBUG_VERB_READING_LOGIC )) && echo "no error"
@@ -1340,6 +1342,7 @@ ${try_FILENAME}"
         #while read -e -t 0.1; do : ; done
         #read -t 1 -n 10000 discard   # a way to clear stdin but (with bash) you can read and discard what is there before you ask for the input
         stage_and_commit_several_files "${OPTIONS}" "${FILENAME}"
+        err_buff=$?
         #COMMIT_RESULTS=$(xargs echo <<< command stage_and_commit_several_files """${OPTIONS}""" """${FILENAME}""" )
         #COMMIT_RESULTS=$(export TERM=$TERM && stage_and_commit_several_files """${OPTIONS}""" """${FILENAME}""" )
         #COMMIT_RESULTS=$(stage_and_commit_several_files """${OPTIONS}""" """${FILENAME}""" )
@@ -1349,8 +1352,8 @@ ${try_FILENAME}"
         (( DEBUG_VERB_READING_LOGIC )) && exit 69; # DEBUG EXIT - WHEN $DEBUG_VERB_READING_LOGIC = 1
         #if [[ ! -z "${COMMIT_RESULTS}" ]] ;  then   # if error buffer if empty
         local ERROR_DID_NOT_HAPPENED=""
-        [[ "${PROCESSOR_ERROR}" == *"MAC"* ]] && [ $? == 0 ] && ERROR_DID_NOT_HAPPENED="1"
-        [[ "${PROCESSOR_ERROR}" == *"INTEL"* ]] && (( $? == 0 )) && ERROR_DID_NOT_HAPPENED="1"
+        [[ "${PROCESSOR_ERROR}" == *"MAC"* ]] && [ $err_buff == 0 ] && ERROR_DID_NOT_HAPPENED="1"
+        [[ "${PROCESSOR_ERROR}" == *"INTEL"* ]] && (( $err_buff == 0 )) && ERROR_DID_NOT_HAPPENED="1"
         if [ "${ERROR_DID_NOT_HAPPENED}" ] && [[ ! -z "${COMMIT_RESULTS}" ]]  ;  then   # if error buffer if empty
         {
             # if [[ "${ERROR}" == "NO" ]] ;  then   # if error buffer if empty
@@ -1369,11 +1372,11 @@ ${try_FILENAME}"
         (( DEBUG_VERB_READING_LOGIC )) && echo "addfile is no so I will add all the files "
         (( DEBUG_VERB_READING_LOGIC )) && echo "git add -p   ...# THIS IS FOR ALL FILES"
         git add -p
-
         COMMIT_RESULTS=$(perform_commit """${ACTION} ${OPTIONS}""")
+        err_buff=$?
         local ERROR_DID_NOT_HAPPENED=""
-        [[ "${PROCESSOR_ERROR}" == *"MAC"* ]] && [ $? == 0 ] && ERROR_DID_NOT_HAPPENED="1"
-        [[ "${PROCESSOR_ERROR}" == *"INTEL"* ]] && (( $? == 0 )) && ERROR_DID_NOT_HAPPENED="1"
+        [[ "${PROCESSOR_ERROR}" == *"MAC"* ]] && [ $err_buff == 0 ] && ERROR_DID_NOT_HAPPENED="1"
+        [[ "${PROCESSOR_ERROR}" == *"INTEL"* ]] && (( $err_buff == 0 )) && ERROR_DID_NOT_HAPPENED="1"
         if [ "${ERROR_DID_NOT_HAPPENED}" ]  ;  then   # if error buffer if empty
         {
             (( ! DEBUG_VERB_READING_LOGIC )) && commit_status_continue
