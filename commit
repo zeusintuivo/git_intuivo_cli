@@ -656,20 +656,20 @@ words_match_insensitively(){
     #                     from    "#!/bin/bash"    to      "#!/usr/bin/env bash"
     #
     if [[ -z "${try_word}" ]]  ||  [[ -z "${preposition}" ]] ; then
-        {
-            return 1 # No, it does not look like a preposition, not enough data to compute
-        }
-        fi
+    {
+        return 1 # No, it does not look like a preposition, not enough data to compute
+    }
+    fi
 
-        # echo "preposition:${preposition}"
-        # exit 69;  DEBUG FOR PREPOSITION FAILING IN MAC OR FREEBSD OR BASH 3.2
-        if [[ "${BASH_VERSION}" > "4" ]] ; then
-        {
+    # echo "preposition:${preposition}"
+    # exit 69;  DEBUG FOR PREPOSITION FAILING IN MAC OR FREEBSD OR BASH 3.2
+    if [ $BASH_VERSION -qt 3 ] ; then
+    {
         local lower_case_preposition="${preposition,,}"   # bash Convert string to lowercase Bash 4 REF: https://stackoverflow.com/questions/2264428/converting-string-to-lower-case-in-bash-shell-scripting
         local lower_case_try_word="${try_word,,}"         # bash Convert string to lowercase Bash 4 REF: https://stackoverflow.com/questions/2264428/converting-string-to-lower-case-in-bash-shell-scripting
         local upper_case_preposition="${preposition^^}"   # bash Convert string to uppercase Bash 4 REF: https://stackoverflow.com/questions/2264428/converting-string-to-lower-case-in-bash-shell-scripting
         local capitalized_preposition="${preposition~}"   # bash Convert string to Toggled Bash 4 REF: https://stackoverflow.com/questions/2264428/converting-string-to-lower-case-in-bash-shell-scripting
-        }
+    }
     else
     {
         local lower_case_preposition=$(echo "${preposition}" | sed 'y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/')    # bash Convert string to lowercase Bash 4 REF: https://stackoverflow.com/questions/2264428/converting-string-to-lower-case-in-bash-shell-scripting
