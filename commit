@@ -575,6 +575,15 @@ it_looks_file_a_filename(){
     fi
 } # end it_looks_file_a_filename
 
+extract_version(){
+    # Bash extract version from a string REF:  https://superuser.com/questions/363865/how-to-extract-a-version-number-using-sed
+    sed -nre 's/^[^0-9]*(([0-9]+\.)*[0-9]+).*/\1/p'
+} # end extract_version
+
+remove_letters() {
+    sed 's/[a-z-]\|[A-Z-]\|[ -]\|[(-)-]\|[, -]\|86_64//g'
+} # end remove_letters
+
 words_match_insensitively(){
     # Sample use
     #             if ( words_match_insensitively "${try_word}" "${one_preposition}"  ) ; then
@@ -663,7 +672,13 @@ words_match_insensitively(){
 
     # echo "preposition:${preposition}"
     # exit 69;  DEBUG FOR PREPOSITION FAILING IN MAC OR FREEBSD OR BASH 3.2
-    if [ $BASH_VERSION -qt 3 ] ; then
+    if [ ! -z ${BASH_VERSION+x} ] ; then {      # check if a variable is set and not empty
+        local VERSION=$BASH_VERSION
+    } else {
+        export BASH_VERSION=$(bash --version | extract_version  |  remove_letters | head -1)
+    }
+    fi
+    if [[ "$(cut -d. -f1 <<< ${BASH_VERSION})" > "3" ]] ; then
     {
         local lower_case_preposition="${preposition,,}"   # bash Convert string to lowercase Bash 4 REF: https://stackoverflow.com/questions/2264428/converting-string-to-lower-case-in-bash-shell-scripting
         local lower_case_try_word="${try_word,,}"         # bash Convert string to lowercase Bash 4 REF: https://stackoverflow.com/questions/2264428/converting-string-to-lower-case-in-bash-shell-scripting
@@ -1403,7 +1418,8 @@ display_commit_results() {
         echo -e "${green}+${blue30}---- ${yellow214}"
     }
     fi
-}
+} # end display_commit_results
+
 display_error_during_commit() {
     local COMMIT_RESULTS="${1}"
     if [[ -z "${COMMIT_RESULTS}" ]] ;  then
@@ -1414,14 +1430,22 @@ display_error_during_commit() {
         echo -e "${green}+${blue30}${red}---- ${yellow214}"
     }
     fi
-}
+} # end display_error_during_commit
 
 check_bash_version_required() {
-    if [[ "${BASH_VERSION}" < "4" ]] ; then
-        echo "Bash Version does not accept Bash Expressions like ,, ^^"
-        ~}
+    if [ ! -z ${BASH_VERSION+x} ] ; then {      # check if a variable is set and not empty
+        local VERSION=$BASH_VERSION
+    } else {
+        export BASH_VERSION=$(bash --version | extract_version  |  remove_letters | head -1)
+    }
     fi
-}
+    if [[ "$(cut -d. -f1 <<< ${BASH_VERSION})" < "4" ]] ; then
+    {
+        echo "Bash Version does not accept Bash Expressions like These -( ,, ^^ # ) chars inside \${VARNAME} as operands to create expresions. "
+    }
+    fi
+} # end check_bash_version_required
+check_bash_version_required
 
 #
 # C H E C K   H O W   C O M P U T E R   H A N D L E S   E R R O R S   --Start
@@ -1436,7 +1460,7 @@ test_positives(){
     KIND="${KIND}MAC"
   fi
   echo "${KIND}"
-}
+} # end test_positives
 PROCESSOR_ERROR=$(test_positives)
 # DEBUG MACPOSITIVE MACPOSITIVE echo "${MACPOSITIVE}"
 # DEBUG MACPOSITIVE exit 1
