@@ -1371,14 +1371,14 @@ ${try_FILENAME}"
         [[ "${PROCESSOR_ERROR}" == *"INTEL"* ]] && (( $err_buff == 0 )) && ERROR_DID_NOT_HAPPENED="1"
         if [ "${ERROR_DID_NOT_HAPPENED}" ] && [[ ! -z "${COMMIT_RESULTS}" ]]  ;  then   # if error buffer if empty
         {
-            # if [[ "${ERROR}" == "NO" ]] ;  then   # if error buffer if empty
-            # {
-            (( ! DEBUG_VERB_READING_LOGIC )) &&    commit_status_continue
-            (( ! DEBUG_VERB_READING_LOGIC )) &&    display_commit_results "${COMMIT_RESULTS}"
-            # } else {
-            #    display_error_during_commit "${COMMIT_RESULTS}"
-            # }
-            # fi
+            if [[ "${ERROR}" == "NO" ]] ;  then   # if error buffer if empty
+            {
+                (( ! DEBUG_VERB_READING_LOGIC )) &&    commit_status_continue
+                display_commit_results "${COMMIT_RESULTS}"
+            } else {
+                display_error_during_commit "${COMMIT_RESULTS}"
+            }
+            fi
         } else {
             (( ! DEBUG_VERB_READING_LOGIC )) && commit_status_continue
         }
@@ -1387,6 +1387,8 @@ ${try_FILENAME}"
         (( DEBUG_VERB_READING_LOGIC )) && echo "addfile is no so I will add all the files "
         (( DEBUG_VERB_READING_LOGIC )) && echo "git add -p   ...# THIS IS FOR ALL FILES"
         git add -p
+        wait
+        git add .
         COMMIT_RESULTS=$(perform_commit """${ACTION} ${OPTIONS}""")
         local err_buff=$?
         local ERROR_DID_NOT_HAPPENED=""
@@ -1395,9 +1397,9 @@ ${try_FILENAME}"
         if [ "${ERROR_DID_NOT_HAPPENED}" ]  ;  then   # if error buffer if empty
         {
             (( ! DEBUG_VERB_READING_LOGIC )) && commit_status_continue
-            (( ! DEBUG_VERB_READING_LOGIC )) && display_commit_results "${COMMIT_RESULTS}"
+            display_commit_results "${COMMIT_RESULTS}"
         } else {
-            (( ! DEBUG_VERB_READING_LOGIC )) && display_error_during_commit "${COMMIT_RESULTS}"
+            display_error_during_commit "${COMMIT_RESULTS}"
         }
         fi
     }
