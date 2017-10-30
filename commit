@@ -544,10 +544,11 @@ echo """${OPTIONS}"""
     echo "${OPTIONS}"
 } # end scoop_filename_or_directory
 
-it_looks_file_a_filename(){
-    local try_exists="${1}"
+it_looks_like_a_filename(){
+    local try_exists="""${1}"""
     #local file_was_listed_as_deleted=$(file_was_deleted "${try_exists}")
     #(( DEBUG_VERB_READING_LOGIC )) && ( file_was_deleted "${try_exists}" ) && echo " file_was_listed_as_deleted ${try_exists}"
+    #(( DEBUG_VERB_READING_LOGIC )) && echo "                +-- it_looks_like_a_filename is trying $try_exists "
     if  [[ ! -z "${try_exists}" ]] ; then
     {
         if [[ -f "${try_exists}" || -d "${try_exists}/" ]] ; then
@@ -573,7 +574,7 @@ it_looks_file_a_filename(){
         return 1
     }
     fi
-} # end it_looks_file_a_filename
+} # end it_looks_like_a_filename
 
 extract_version(){
     # Bash extract version from a string REF:  https://superuser.com/questions/363865/how-to-extract-a-version-number-using-sed
@@ -595,8 +596,11 @@ words_match_insensitively(){
     #                     return 1  # no it looks like is NOT preposition
     #                 }
     #             fi
-    local try_word="${1}"
-    local preposition="${2}"
+    # Here triple """ to ensure that even things around " will or '  will work properly
+    local try_word="""${1}"""
+    local preposition="""${2}"""
+    # Debug check that we are receiving values correctly
+    # (( DEBUG_VERB_READING_LOGIC )) && echo "     +-- words_match_insensitively: ($try_word) vs ($preposition)"
     # When Error "bash to lowercase '${,,}: bad substitution ' "
     # ${preposition,,}: bad substitution error fix is to check for the current bash version in the shells file
     # REF: https://stackoverflow.com/questions/29855489/string-replacement-to-lowercase-in-bash-4-3-33-bad-substitution-error
@@ -721,8 +725,8 @@ remove_double_spaces() {
 remove_found_word_from_commit_message() {
     # Sample use
     #
-    local options="""${1}"""
-    local filename="""${2}"""
+    local options="${1}"
+    local filename="${2}"
     echo """${options}""" | remove_string "${filename}" | remove_double_spaces
 } # end  remove_found_word_from_commit_message
 
@@ -740,28 +744,38 @@ is_an_exception() {
     #             fi
     #             ( is_an_exception "test" ) && echo "this is an exception"
     #             ( ! is_an_exception "test" ) && echo "this is NOT an exception"
-    local try_word="""${1}"""
+    #
+    #             if (  is_an_exception "db"   ) ; then
+    #             {
+    #                 echo  "   matches"
+    #                 exit 69;
+    #             }
+    #             fi
+    local try_word="${1}"
     local exceptions="DB
 TEST
 SCRIPT
 SERVICE
 FEATURE
 "
-    for one_exception in "${exceptions}"; do
+    # Here to check that the value is getting revied
+    # (( DEBUG_VERB_READING_LOGIC )) && echo "       +-- is_an_exception: ($try_word) vs ($exceptions)"
+    for one_exception in ${exceptions}; do
     {
-      # if not empty
-      if [ ! -z "${one_exception}" ] ; then
+      # Here to check one_exception cotains only one value and not a the whole list
+      # (( DEBUG_VERB_READING_LOGIC )) && echo  "           +___is_an_exception.one_exception=(${one_exception})"
+      if [ ! -z "${one_exception}" ] ; then  # if not empty
       {
         if ( words_match_insensitively "${try_word}" "${one_exception}"  ) ; then
         {
-            return 1  # yes it looks like is an exception
+            return 0  # yes it looks like is an exception with a 0
         }
         fi
       }
       fi
     }
     done
-    return 0; # no it looks like is NOT an exception. not found in list
+    return 1; # no it looks like is NOT an exception. not found in list with a value
 } # end is_an_exception
 
 try_preposition_and_remove_if_filename() {
@@ -776,9 +790,9 @@ try_preposition_and_remove_if_filename() {
     # OPTIONS=$(try_preposition_and_remove_if_filename """${OPTIONS}""" """${try_FILENAME1}"""  """${try_FILENAME2}""")
 
 
-    local options="""${1}"""
-    local try_word="""${2}"""
-    local try_filename="""${3}"""
+    local options="${1}"
+    local try_word="${2}"
+    local try_FILENAME="${3}"
 
 
     local one_preposition=""
@@ -786,12 +800,12 @@ try_preposition_and_remove_if_filename() {
 FROM
 IN"
     #while read -r one_preposition; do
-    for one_preposition in "${prepositions}"; do
+    for one_preposition in ${prepositions}; do
     {
       # if not empty
       if [ ! -z "${one_preposition}" ] ; then
       {
-            if ( words_match_insensitively "${try_word}" "${one_preposition}"  ) && ( it_looks_file_a_filename "${try_filename}" ) && ( ! is_an_exception "${try_filename}"  ); then
+            if ( words_match_insensitively "${try_word}" "${one_preposition}"  ) && ( it_looks_like_a_filename "${try_FILENAME}" ) && ( ! is_an_exception "${try_FILENAME}"  ); then
             {
                 options=$(remove_found_word_from_commit_message """${options}""" """${try_word}""")  # remove the first TO
             }
@@ -1314,11 +1328,23 @@ perform_git_add(){
     local back_try_WORD=""
     local COUNTER=0
     local try_FILENAME=""
+    (( DEBUG_VERB_READING_LOGIC )) && echo "Going into 'for' loop to try for filenames "
     for try_FILENAME in ${@}; do
     {
-
-        if ( it_looks_file_a_filename "${try_FILENAME}"  ) && ( ! is_an_exception "${try_filename}"  ); then
+        (( DEBUG_VERB_READING_LOGIC )) && echo "trying( $COUNTER): word(${try_FILENAME})"
+        if ( it_looks_like_a_filename "${try_FILENAME}"  ) ; then
         {
+            (( DEBUG_VERB_READING_LOGIC )) && echo "              it_looks_like_a_filename"
+        }
+        fi
+        if ( is_an_exception "${try_FILENAME}"  ) ; then
+        {
+            (( DEBUG_VERB_READING_LOGIC )) && echo "              is_an_exception"
+        }
+        fi
+        if ( it_looks_like_a_filename "${try_FILENAME}"  ) && ( ! is_an_exception "${try_FILENAME}"  ); then
+        {
+             (( DEBUG_VERB_READING_LOGIC )) && echo "              it_looks_like_a_filename and is not ! is_an_exception "
             FILENAME="${FILENAME}
 ${try_FILENAME}"
             ADDFILE="SI"
