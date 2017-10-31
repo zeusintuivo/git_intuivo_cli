@@ -181,6 +181,11 @@ EOF
                     [[ -f "${FILENAME}" ]] && EXTRA_DETAILS_NOT_COMMITED_YET=$(fileparticipationincolors "${FILENAME}" | grep "NCY")
                 }
                 fi
+                if [ $CALCULATE_END_OF_SCREEN_CUT_MESSAGE -le 0 ] ; then
+                {
+                    CALCULATE_END_OF_SCREEN_CUT_MESSAGE=$LONGEST_NAME
+                }
+                fi
                 # echo DEBUG PRESENT "CALCULATE_END_OF_SCREEN_CUT_MESSAGE: ${CALCULATE_END_OF_SCREEN_CUT_MESSAGE}"
                 FILE_LASTEST_COMMIT_MESSAGE="$(git log -n 1 --pretty=format:%s -- "${FILENAME}" | trim_start_space | cut -c -${CALCULATE_END_OF_SCREEN_CUT_MESSAGE}  )"
                 # echo DEBUG PRESENT "FILE_LASTEST_COMMIT_MESSAGE: ${FILE_LASTEST_COMMIT_MESSAGE}"
