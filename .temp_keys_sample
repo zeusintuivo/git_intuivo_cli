@@ -1,0 +1,3 @@
+export SSH_KEY="local name from file 'zeus' or 'mark'"
+export GITUSER="user name only 'usename' from the github or gitlab account or bitbucket login"
+export JOURNAL_PUT_COMMIT_METHOD="can only be 'put' or 'commit'. PUT makes a direct add and push and COMMIT just commits without pushing "
