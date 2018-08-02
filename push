@@ -54,9 +54,11 @@ PROCESSOR_ERROR=$(test_positives)
 # C H E C K   H O W   C O M P U T E R   H A N D L E S   E R R O R S   --End
 #
 
+
 #branchname
 PUSH_CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD);
 
+# stop if only one commit from you
 test_project_part=$(projectparticipation)
 if [[ "${test_project_part}" == *" 1 ${GIT_USER_NAME}"* ]] ; then
 {
@@ -65,6 +67,8 @@ if [[ "${test_project_part}" == *" 1 ${GIT_USER_NAME}"* ]] ; then
   exit 69;
 }
 fi
+
+
 #push
 echo -e "${PURPLE_BLUE} === ${GRAY241} ${GIT_USER_NAME} ${PURPLE_BLUE} pushes to ${CYAN} ${PUSH_CURRENT_BRANCH} ${PURPLE_BLUE} === ${GRAY241} ";
 
