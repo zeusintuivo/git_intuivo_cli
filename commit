@@ -94,13 +94,34 @@ get_longest_name_length() {
 } #end get_longest_name_length
 
 split_files() {
-    # Sample use
+    # Sample use:
+    #
+    # split_between_pipe  "A|app/assets/javascripts/loading.js"
+    #
+    # functionality similar to:
+    #
     # IFS=\| read STATUS FILENAME <<EOF
-    # split_files ${ONE_CHANGED_FILES_WITH_STATUS}
+    # ${ONE_CHANGED_FILES_WITH_STATUS}
     # EOF
-    #echo "A|app/assets/javascripts/loading.js"
-    echo "${1##*-|}"
+    #
+    # old functionality failed:
+    #
+    # echo "${1##*-|}" ## Failed This this not work anymore
+    #
+    # New sample theory:
+    # IN="bla@some.com;john@home.com"
+    # arrIN=(${IN//;/\\\n})   #REF: https://stackoverflow.com/questions/918886/how-do-i-split-a-string-on-a-delimiter-in-bash
+    #
+    IN="""${@}"""
+    arrIN=(${IN//\>/"\n"})  # Here having arrIN=(${IN//;/\\\n}) the tripple \\\n would case to execute the output
+    echo """${arrIN}"""
 } #end split_files
+
+testself_split_files(){
+    expect split_files("a|b") to be "a
+b"
+}
+testself_split_files
 
 present_files() {
     local PYMENTIZE_COMMAND_EXISTS=$(command -v pygmentize 2>&1 && echo "test" | pygmentize 2>&1) # Check and catch capture all stout sdout output, error will return none 0 to $?)
