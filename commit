@@ -117,11 +117,19 @@ split_files() {
     echo """${arrIN}"""
 } #end split_files
 
+<<<<<<< HEAD
 # testself_split_files(){
 #     expect split_files("a|b") to be "a
 # b"
 # }
 # testself_split_files
+=======
+#testself_split_files(){
+#    expect split_files("a|b") to be "a
+#b"
+#}
+#testself_split_files
+>>>>>>> e4bc75eb692808ad3e5fdc1161a761984f1a5576
 
 present_files() {
     local PYMENTIZE_COMMAND_EXISTS=$(command -v pygmentize 2>&1 && echo "test" | pygmentize 2>&1) # Check and catch capture all stout sdout output, error will return none 0 to $?)
