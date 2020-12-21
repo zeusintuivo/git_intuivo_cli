@@ -380,7 +380,7 @@ commit_status_continue() {
     {
         echo ""
         echo -e "${red}WARNING! ${yellow214}I believe this repo to be Branched Merged Against :${red}${BRANCH_MERGE_AGAINST}${yellow214}:
-        but ${BRANCH_MERGE_AGAINST} branch does not exists remotely or localy.
+        but ${BRANCH_MERGE_AGAINST} branch does not exists remotely or locally.
         and I use this branch to compare against. Defaulting to :${red}master${yellow214}: ${reset}"
         echo ""
 
