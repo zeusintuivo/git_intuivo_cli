@@ -1,3 +1,24 @@
 export SSH_KEY="local name from file 'zeus' or 'mark'"
 export GITUSER="user name only 'usename' from the github or gitlab account or bitbucket login"
 export JOURNAL_PUT_COMMIT_METHOD="can only be 'put' or 'commit'. PUT makes a direct add and push and COMMIT just commits without pushing "
+
+# Manually force to change name before commit
+( command -v git >/dev/null 2>&1; ) && [ -e .git ] && git config --local user.name "First Last"
+
+# journal section 
+export JOURNAL_PUT_COMMIT_METHOD="put"
+export JOURNAL_HOME="$HOME/_" #  /journal will be added
+export JOURNAL_HOME="$(realpath $(pwd)/../)"  #   /journal will be added
+
+# journal_get_description_work_link_url script worker dependency
+[[ -n "${TICKETID}" ]] && export ISSUETRACKERLOCATION=$(echo "https://pm.pxixum.net/jira/browse/HTMLEDITOR-${TICKETID}")
+
+# newfeature script
+# linux [[ type -t only_2_dashed_words == *"function"* ]] && export JOURNAL_NEWBRANCH_STYLE_4_FEATURE=$(echo "${TICKETID}_${DESCRIPTION}" |  only_2_dashed_words ) # methods from sed_function inside journal
+type only_2_dashed_words &>/dev/null && export JOURNAL_NEWBRANCH_STYLE_4_FEATURE=$(echo "${TICKETID}_${DESCRIPTION}" |  only_2_dashed_words ) # methods from sed_function inside journal
+export JOURNAL_JOURNALDIR_STYLE_4_FEATURE="empty"  # empty will behave as empty directory when creating it.
+
+# newissue script
+# linux [[ type -t only_2_dashed_words == *"function"* ]] && export JOURNAL_NEWBRANCH_STYLE_4_ISSUE=$(echo "${TICKETID}_${DESCRIPTION}" |  only_2_dashed_words )  # methods from sed_function inside journal
+type only_2_dashed_words &>/dev/null && export JOURNAL_NEWBRANCH_STYLE_4_ISSUE=$(echo "${TICKETID}_${DESCRIPTION}" |  only_2_dashed_words )  # methods from sed_function inside journal
+export JOURNAL_JOURNALDIR_STYLE_4_ISSUE="empty"
