@@ -1,0 +1,20 @@
+#!/bin/sh
+#
+# Description:
+#   from the current working folder search recursively for local git repos and run 'git unpushed-all' on each of them.
+#
+# Usage:
+#   git unpushed-recursive [args...]
+
+git_unpushed_recursive() {	
+  local dir
+  for f in */.git/; do
+    if [[ -d "$f" && ! -L "$f" ]]; then
+      dir=$(dirname $f)
+      echo ">>> Checking repository folder './$dir'"
+      (pushd $dir >/dev/null; git unpushed-all "$@";)
+    fi
+  done
+}
+
+git_unpushed_recursive "$@"

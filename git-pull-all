@@ -1,0 +1,46 @@
+#!/bin/sh
+#
+# Description:
+#   Update all local branches, checking out each branch in succession. 
+#   Eventually returns to the original branch. Use "-n" for dry-run.
+#   (inspired from http://stackoverflow.com/a/17180894/51264)
+#
+#   Performs the following:
+#   1. stash away all pending changes
+#   2. prune obsolete tracking branches
+#   3. git pull on all tracking branches 
+#   4. pop back all changes
+#   5. open sourcetree      
+#
+# Usage:
+#   git pull-all [-n|--dryrun] [-s|--sourcetree]
+
+git_pull_all() {
+  local run currentBranch old_stash new_stash
+
+  [[ "$1" = "-n" || "$1" = "--dryrun" ]] && shift && run=echo
+  [[ "$1" = "-s" || "$1" = "--sourcetree" ]] && shift && opensourcetree="open -a SourceTree ."
+  
+  $run git remote update --prune;
+
+  currentBranch=$(git name-rev --name-only HEAD 2>/dev/null)
+  
+  old_stash=$(git rev-parse -q --verify refs/stash); 
+  $run git stash save -q -u 'before pull'; 
+  new_stash=$(git rev-parse -q --verify refs/stash);
+  
+  for x in $( git branch | cut -c3- ) ; do
+     echo ">>> Updating `pwd` git:($x)"
+     ($run git checkout $x && $run git pull --ff-only || exit 2)
+  done
+
+  [ ${#currentBranch} -gt 0 ] && $run git checkout "$currentBranch" >/dev/null
+  
+  if [ "$old_stash" != "$new_stash" ]; then 
+    $run git stash pop; 
+  fi
+  
+  $run $opensourcetree
+}
+
+git_pull_all "$@"

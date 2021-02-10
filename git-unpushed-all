@@ -1,0 +1,31 @@
+#!/bin/sh
+#
+# Description:
+#   Fetch origin and for each tracking branch list any unpushed local commits
+#
+# Usage:
+#   git unpushed-all [-n|--dryrun]
+
+git_unpushed_all() {
+  local run currentBranch log res
+
+  [[ "$1" = "-n" || "$1" = "--dryrun" ]] && shift && run=echo
+  
+  currentBranch=$(git name-rev --name-only HEAD 2>/dev/null)
+
+  $run git fetch --all
+  
+  for x in $( git branch | cut -c3- ) ; do
+    $run git checkout $x &>/dev/null
+    log=$(git --no-pager log origin/$x.. 2>/dev/null)
+    res=$?
+    if [[ "$res" -eq 0 && "${#log}" -gt 0 ]]; then 
+      echo ">>> Branch '$x' has unpublished updates:"
+      echo "$log"
+    fi
+  done
+
+  [ ${#currentBranch} -gt 0 ] && $run git checkout "$currentBranch" >/dev/null 2>&1
+}
+
+git_unpushed_all "$@"

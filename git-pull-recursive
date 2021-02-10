@@ -1,0 +1,21 @@
+#!/bin/sh
+#
+# Description:
+#   from the current working folder search recursively for local git repos and run 'git pull-all' on them. All arguments to 'git pull-recursive' are passed to 'git pull-all'
+#   Basically a convenience shortcut for 'git recursive pull-all'
+#
+# Usage:
+#   git pull-recursive [args...]
+
+git_pull_recursive() {	
+  local dir
+  for f in */.git/; do
+    if [[ -d "$f" && ! -L "$f" ]]; then
+      dir=$(dirname $f)
+      echo ">>> Updating repository folder './$dir'"
+      (pushd $dir; git pull-all "$@" || exit 2)
+    fi
+  done
+}
+
+git_pull_recursive "$@"

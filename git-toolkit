@@ -1,0 +1,27 @@
+#
+# Description:
+# 	Various additional git utility commands
+#
+# git recursive <command>:
+#   from the current working folder search recursively for local git repos and run 'git <command>' on each of them. 
+#
+# git recursive-exec <command>:
+#   from the current working folder search recursively for local git repos and run '<command>' on each of them. 
+#
+# git pull-recursive:
+#   from the current working folder search recursively for local git repos and run 'git pull-all' on each of them.
+#
+# git pull-all:
+#   in a git repo folder loop over all tracking branches and call 'git pull' on them
+#
+# git unpushed-recursive:
+#   from the current working folder search recursively for local git repos and run 'git unpushed-all' on each of them.
+#
+# git unpushed-all:
+#   in a git repo folder loop over all tracking branches and call 'git --no-pager log @{push}..' on them to list unpushed commits.
+#
+#
+# Install:
+#   1. checkout the gist repo into a folder ~/bin/git:
+#     mkdir -p ~/bin >/dev/null && pushd ~/bin && git clone git@gist.github.com:1044107a1126901249b1164dac2fce15.git git 
+#   2. add ~/bin/git to your path (e.g. via ~/.profile)
