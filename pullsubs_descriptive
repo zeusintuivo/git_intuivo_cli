@@ -1,7 +1,20 @@
 #!/usr/bin/env bash
 
-.dirs() {
+._dirs() {
     find * -maxdepth 0 -type d   # mac and linux tested
+}
+
+._replace_all(){
+  local found
+  local one_item="${1}"
+  local one_action="${2}"
+  while :  # replace all {#} to $one_item value
+  do
+    one_action="${one_action/\{\#\}/$one_item}"  # replace value inside string substitution expresion bash
+    found=$(echo -n "${one_action}" | grep "{#}")
+    [ $? -eq 1 ] &&  break
+  done
+  echo "${one_action}"
 }
 # DEBUG=1
 # REMOVECACHE=1
@@ -14,13 +27,12 @@
   local _curdir="${1}"
   local _subdir=""
   local local_actions="${2}"
-  local local_items="$(.dirs)"
+  local local_items="$(._dirs)"
   local one_item
   local one_action
   local action
   # local _subdirs
   local _actions
-  local found
   cd "${_curdir}"
   local _cwd="$(pwd)"
 
@@ -28,19 +40,12 @@
   {
     if [ ! -z "${one_item}" ] ; then  # if not empty
     {
-      one_action="${local_actions}"
-      while :  # replace all {#} to $one_item value
-      do
-        one_action="${one_action/\{\#\}/$one_item}"  # replace value inside string substitution expresion bash
-        found=$(echo -n "${one_action}" | grep "{#}")
-	[ $? -eq 1 ] &&  break
-      done
-      action="${one_action}"
-      echo "${action}"
+      action="$(._replace_all "${one_item}" "${local_actions}")"
+      # echo "${action}"
       eval "${action}"
       _subdir="${_cwd}/${one_item}"
       cd "${_subdir}"
-      pwd
+      # pwd
       [[ -d .git/ ]] && pull
       if [[ ! -d .git/ ]] ; then
       {
