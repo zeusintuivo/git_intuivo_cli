@@ -5,7 +5,7 @@
 }
 # DEBUG=1
 # REMOVECACHE=1
-.subdir() {
+.pullsubdirs() {
   # Perform all actions in
   #        LIST1
   #          for each element in
@@ -44,7 +44,7 @@
         pwd
         [[ -d .git/ ]] && pull
         "
-        .subdir "${_subdir}" "${_actions}"
+        .pullsubdirs "${_subdir}" "${_actions}"
       }
       fi
     }
@@ -65,6 +65,6 @@ pwd
 [[ -d .git/ ]] && pull
 "
 
-.subdir  "${CURDIR}" "${ACTIONS}" 
+.pullsubdirs  "${CURDIR}" "${ACTIONS}" 
 
 

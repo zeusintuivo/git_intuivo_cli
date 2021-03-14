@@ -5,7 +5,7 @@
 }
 # DEBUG=1
 # REMOVECACHE=1
-.subdir() {
+.pullsubs() {
   # Perform all actions in
   #        LIST1
   #          for each element in
@@ -21,7 +21,7 @@
 
   while read -r one_item; do
   {
-    if [ ! -z "${one_item}" ] ; then  # if not empty
+    if [[ -n "${one_item}" ]] ; then  # if not empty
     {
       action="${one_action/\{\#\}/$one_item}"  # replace value inside string substitution expresion bash
       eval ${action}
@@ -49,9 +49,9 @@ ACTIONS="
       [[ -d .git/ ]] && pull
       if [[ ! -d .git/ ]] ; then
       {
-        .subdir \"${_cwd}/${#}\" "${ACTIONS}"
+        .pullsubs \"${_cwd}/${#}\" "${ACTIONS}"
       }
       fi
 "
-.subdir  "${CURDIR}" "${ACTIONS}" 
+.pullsubs  "${CURDIR}" "${ACTIONS}" 
 
