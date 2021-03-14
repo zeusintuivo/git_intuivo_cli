@@ -23,7 +23,7 @@
   {
     if [ ! -z "${one_item}" ] ; then  # if not empty
     {
-      action="${one_action/\{\#\}/$one_item}"  # replace value inside string substitution expresion bash
+      action="${ACTIONS/\{\#\}/$one_item}"  # replace value inside string substitution expresion bash
       eval ${action}
     }
     fi
