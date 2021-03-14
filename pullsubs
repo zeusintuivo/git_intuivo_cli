@@ -10,6 +10,7 @@
   #                           LIST2
   local _curdir="${1}"
   local ACTIONS="${2}"
+  cd "${_curdir}"
   local local_items="$(.dirs)"
   local one_item  action _cwd
   while read -r one_item; do

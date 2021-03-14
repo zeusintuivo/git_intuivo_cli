@@ -27,13 +27,13 @@
   local _curdir="${1}"
   local _subdir=""
   local local_actions="${2}"
+  cd "${_curdir}"
   local local_items="$(._dirs)"
   local one_item
   local one_action
   local action
   # local _subdirs
   local _actions
-  cd "${_curdir}"
   local _cwd="$(pwd)"
 
   while read -r one_item; do
