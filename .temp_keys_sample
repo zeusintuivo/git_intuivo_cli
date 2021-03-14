@@ -2,6 +2,8 @@ export SSH_KEY=     "local name from file 'zeus' or 'mark'"
 export GITUSER=     "user name only 'usename' from the github or gitlab account or bitbucket login"
 export JOURNAL_PUT_COMMIT_METHOD=      "can only be 'put' or 'commit'. PUT makes a direct add and push and COMMIT just commits without pushing "
 export GITPROVIDER=      default is "git@github.com" but private can be "git@git.company.net"
+export VPNREQUIRED=      empty default will check is the named here vpn name is listed and on
+export EDITOR=           empty default guake_quick_file_opener will try to guess which editor to use, or use this instead if not found 
 
 # Manually force to change name before commit
 # ( command -v git >/dev/null 2>&1; ) && [ -e .git ] && git config --local user.name "First Name"
