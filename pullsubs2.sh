@@ -1,3 +1,5 @@
+#!/bin/bash
+
 .dirs() {
     find * -maxdepth 0 -type d   # mac and linux tested
 }
