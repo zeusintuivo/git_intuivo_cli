@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 .dirs() {
     find * -maxdepth 0 -type d   # mac and linux tested
