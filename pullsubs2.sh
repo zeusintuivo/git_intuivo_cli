@@ -3,55 +3,43 @@
 .dirs() {
     find * -maxdepth 0 -type d   # mac and linux tested
 }
-# DEBUG=1
-# REMOVECACHE=1
 .pullsubs() {
   # Perform all actions in
   #        LIST1
   #          for each element in
   #                           LIST2
-
   local _curdir="${1}"
   local ACTIONS="${2}"
   local local_items="$(.dirs)"
-  local one_item
-  local one_action
-  local action
-  local _cwd="$(pwd)"
-
+  local one_item  action _cwd
   while read -r one_item; do
   {
     if [[ -n "${one_item}" ]] ; then  # if not empty
     {
+      _cwd="${_curdir}/${one_item}"
+      cd "${_cwd}"
+      echo "${_cwd}"
       action="${ACTIONS/\{\#\}/$one_item}"  # replace value inside string substitution expresion bash
-      eval ${action}
+      eval "${action}"
     }
     fi
   }
   done <<< "${local_items}"
+  return 0
 }
 
 
 CURDIR="${PWD}"
-
-ACTIONS="echo -e \".\"
-echo \" \"
-echo \"Directory:\"
-echo \". \"
-echo \". . . . . . .       {#} \"
-cd \"${CURDIR}/{#}\"
-pwd
-[[ -d .git/ ]] && pull
-"
 ACTIONS="
-      cd \"${_cwd}/${#}\"
-      pwd
-      [[ -d .git/ ]] && pull
-      if [[ ! -d .git/ ]] ; then
-      {
-        .pullsubs \"${_cwd}/${#}\" "${ACTIONS}"
-      }
-      fi
+if [[ -d .git/ ]] ; then 
+{
+  pull
+}
+else
+{
+  .pullsubs \"$(pwd)/{#}\" \"${ACTIONS}\"
+}
+fi
 "
-.pullsubs  "${CURDIR}" "${ACTIONS}" 
+.pullsubs  "${CURDIR}" "${ACTIONS}"
 

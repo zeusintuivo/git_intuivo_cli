@@ -20,6 +20,7 @@
   local action
   # local _subdirs
   local _actions
+  local found
   cd "${_curdir}"
   local _cwd="$(pwd)"
 
@@ -27,9 +28,17 @@
   {
     if [ ! -z "${one_item}" ] ; then  # if not empty
     {
-      action="${one_actions/\{\#\}/$one_item}"  # replace value inside string substitution expresion bash
+      one_action="${local_actions}"
+      while :  # replace all {#} to $one_item value
+      do
+        one_action="${one_action/\{\#\}/$one_item}"  # replace value inside string substitution expresion bash
+        found=$(echo -n "${one_action}" | grep "{#}")
+	[ $? -eq 1 ] &&  break
+      done
+      action="${one_action}"
       echo "${action}"
-        _subdir="${_cwd}/${one_item}"
+      eval "${action}"
+      _subdir="${_cwd}/${one_item}"
       cd "${_subdir}"
       pwd
       [[ -d .git/ ]] && pull
@@ -41,8 +50,6 @@
         echo \". \"
         echo \". . . . . . .       {#} \"
         cd \"${_subdir}/{#}\"
-        pwd
-        [[ -d .git/ ]] && pull
         "
         .pullsubdirs "${_subdir}" "${_actions}"
       }
