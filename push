@@ -70,6 +70,7 @@ fi
 
 
 #push
+pull
 echo -e "${PURPLE_BLUE} === ${GRAY241} ${GIT_USER_NAME} ${PURPLE_BLUE} pushes to ${CYAN} ${PUSH_CURRENT_BRANCH} ${PURPLE_BLUE} === ${GRAY241} ";
 
 push_result=$(git push origin "${PUSH_CURRENT_BRANCH}"  2>&1 )  # Check and catch capture all stout sdout output, error will return 1 to $?)
