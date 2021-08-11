@@ -43,7 +43,7 @@ pwd
 DIEPULLCURRENTBRANCH=\$(git rev-parse --abbrev-ref HEAD);
 [[ -d .git/ ]] && pull
 _err=\$?
-if [ \$_err -gt 0 ] ; then {  git stash;   git branch --set-upstream-to=origin/\$DIEPULLCURRENTBRANCH \$DIEPULLCURRENTBRANCH;  git pull origin \$DIEPULLCURRENTBRANCH;  git stash pop;}fi
+[ \$_err -gt 0 ] && (git stash;   git branch --set-upstream-to=origin/\$DIEPULLCURRENTBRANCH \$DIEPULLCURRENTBRANCH;  git pull origin \$DIEPULLCURRENTBRANCH;  git stash pop;)
 "
 cd "${CURDIR}"
 
