@@ -234,12 +234,12 @@ function _breakable_copy_directory(){
 	_err=$?
 	local _last_commit="$(<COMMIT)"
 	enforce_variable_with_value _last_commit "${_last_commit}"
-	if [[ "${_last_commit}" == *"build(deps)"* ]]  || \
-		[[ "${_last_commit}" == *"dependabot"* ]] || \
-		[[ "${_last_commit}" == *"cleanup"* ]] || \
-		[[ "${_last_commit}" == *"bump"* ]] || \
-		( [[ "${_last_description}" == *"deps"* ]] && [[ "${_last_description}" == *"bump"* ]] ) || \
-		( [[ "${_last_description}" == *"deps"* ]] && [[ "${_last_description}" == *"build"* ]] )  \
+	if [[ "${_last_commit,,}" == *"build(deps)"* ]]  || \
+		[[ "${_last_commit,,}" == *"dependabot"* ]] || \
+		[[ "${_last_commit,,}" == *"cleanup"* ]] || \
+		[[ "${_last_commit,,}" == *"bump"* ]] || \
+		( [[ "${_last_description,,}" == *"deps"* ]] && [[ "${_last_description,,}" == *"bump"* ]] ) || \
+		( [[ "${_last_description,,}" == *"deps"* ]] && [[ "${_last_description,,}" == *"build"* ]] )  \
    ; then
 	{
 		Skipping "build(deps) dependabot commit from bot"
@@ -345,6 +345,7 @@ function _breakable_copy_directory(){
 	# [ $_err -gt 0 ] && touch "${_new_folder_name}._FAILED_.MVSECONDATTEMPT" && return 1
 	# [ $_err -gt 0 ] && log "${_log_path}" "_FAILED_" "MVSECONDATTEMPT" && return 1
   # echo $_err &&   exit 0
+  du -cksh * > breakable_sizes.log
 	return 0
 } # end _breakable_copy_directory
 
@@ -353,6 +354,10 @@ function _breakable_copy_directory(){
 # 1. All commits
 # 2. Loop
 # 3. cp -R
+function _one_liner(){                    # grep tab char       # delete_empty_lines
+	echo "$(cat "${1}/breakage_sizes.log" | grep -P '\t'"${2}_")" |  sed '/^\s*$/d' >>"${1}/breakage_sizes_sorted.log"
+} # end _one_liner
+
 function _break_all_commits(){
 	local _cwd=$(pwd)
 	enforce_variable_with_value _cwd "${_cwd}"
@@ -424,13 +429,13 @@ function _break_all_commits(){
   	if ([[ -n "${_last_description}" ]] ) &&
   		(
   			[[ "${_last_description}" == *"${_commit_description}"* ]] ||
-  			[[ "${_last_description}" == *"cleanup"* ]] ||
-  			[[ "${_last_description}" == *"readme"* ]] ||
-  			[[ "${_last_description}" == *"build(deps)"* ]] ||
-  			[[ "${_last_description}" == *"bdependabot"* ]] ||
-  			[[ "${_last_description}" == *"bump"* ]] ||
-  			( [[ "${_last_description}" == *"deps"* ]] && [[ "${_last_description}" == *"bump"* ]] ) ||
-  			( [[ "${_last_description}" == *"deps"* ]] && [[ "${_last_description}" == *"build"* ]] )
+  			[[ "${_last_description,,}" == *"cleanup"* ]] ||
+  			[[ "${_last_description,,}" == *"readme"* ]] ||
+  			[[ "${_last_description,,}" == *"build(deps)"* ]] ||
+  			[[ "${_last_description,,}" == *"bdependabot"* ]] ||
+  			[[ "${_last_description,,}" == *"bump"* ]] ||
+  			( [[ "${_last_description,,}" == *"deps"* ]] && [[ "${_last_description,,}" == *"bump"* ]] ) ||
+  			( [[ "${_last_description,,}" == *"deps"* ]] && [[ "${_last_description,,}" == *"build"* ]] )
   		) ; then
   	{
   		Skipping "${_counter}_ 'bump, cleanup, build + deps, bump + deps, readme, dependabot, build(deps), repeated' commits with same description: <${_commit_description}>"
@@ -447,7 +452,24 @@ function _break_all_commits(){
     # (( _counter == 40 )) && exit 0
   }
 	done <<< "${_commits}"
-	return 0
+  cd  "${TARGETFOLDER}"
+  Checking "sizes into  breakage_sizes.log du -cksh * | tee -a breakage_sizes.log"
+	du -cksh * | tee -a "${TARGETFOLDER}/breakage_sizes.log"
+	local _one _result=""
+	Message ordering sizes
+	local filesizes="$(<"${TARGETFOLDER}/breakage_sizes.log")"
+	# for _commit in ${_commits} ; do
+	echo "">"${TARGETFOLDER}/breakage_sizes_sorted.log"
+	while read -r _commit ; do
+	{
+		[[ -z "${_commit}" ]] && continue  # skip empties
+		_one_liner "${TARGETFOLDER}" "${_current_commit}"
+		_current_commit=$(( _current_commit - 1 ))
+  }
+	done <<< "${_commits}"
+  # done
+	echo "$(cat "${TARGETFOLDER}/breakage_sizes.log" | grep -P '\t'"total")" |  sed '/^\s*$/d' >>"${TARGETFOLDER}/breakage_sizes_sorted.log"
+		return 0
 } # end break_all_commits
 # check_required_packages pnpm "
 #   ava
