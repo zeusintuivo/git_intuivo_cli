@@ -403,6 +403,20 @@ function _one_liner(){
 	if [[ "$(uname)" == "Darwin" ]] ; then
 	{
 	  # echo "# mac grep"                      # grep tab char       # delete_empty_lines
+		echo "$(cat "${1}/breakage_sizes.log" | pcregrep '\t'"${2}_")" |  sed '/^\s*$/d' >>"${1}/breakage_sizes_sorted.log"
+	}
+	else
+	{
+	  # echo "# windows /linux grep"           # grep tab char       # delete_empty_lines
+		echo "$(cat "${1}/breakage_sizes.log" | grep -P '\t'"${2}_")" |  sed '/^\s*$/d' >>"${1}/breakage_sizes_sorted.log"
+	}
+	fi
+  #
+} # end _one_liner
+function _one_liner_total(){
+	if [[ "$(uname)" == "Darwin" ]] ; then
+	{
+	  # echo "# mac grep"                      # grep tab char       # delete_empty_lines
 		echo "$(cat "${1}/breakage_sizes.log" | pcregrep '\t'"${2}")" |  sed '/^\s*$/d' >>"${1}/breakage_sizes_sorted.log"
 	}
 	else
@@ -533,12 +547,12 @@ function _break_all_commits(){
 	while read -r _commit ; do
 	{
 		[[ -z "${_commit}" ]] && continue  # skip empties
-		_one_liner "${TARGETFOLDER}" "${_current_commit}_"
+		_one_liner "${TARGETFOLDER}" "${_current_commit}"
 		_current_commit=$(( _current_commit - 1 ))
   }
 	done <<< "${_commits}"
   # done
-  _one_liner "${TARGETFOLDER}" "total"
+  _one_liner_total "${TARGETFOLDER}" "total"
 	# echo "$(cat "${TARGETFOLDER}/breakage_sizes.log" | grep -P '\t'"total")" |  sed '/^\s*$/d' >>"${TARGETFOLDER}/breakage_sizes_sorted.log"
 		return 0
 } # end break_all_commits
