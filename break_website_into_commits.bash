@@ -9,14 +9,14 @@
 # DEBUG=1
 set -E -o functrace
 export THISSCRIPT
-typeset -gr THISSCRIPT="$0"
+typeset -r THISSCRIPT="$0"
 (( DEBUG ))  && echo "${THISSCRIPT}"
 export THISFOLDER
-typeset -gr THISFOLDER="$(dirname "$0")"
+typeset -r THISFOLDER="$(dirname "$0")"
 (( DEBUG ))  && echo "${THISFOLDER}"
 
  export CPU_COUNT
-  typeset -g CPU_COUNT=1
+  typeset -ri CPU_COUNT=1
 if ( command -v nproc >/dev/null 2>&1; ) ; then
 {
   CPU_COUNT="$(nproc)"
@@ -24,7 +24,7 @@ if ( command -v nproc >/dev/null 2>&1; ) ; then
 fi
  (( DEBUG ))  && echo "${CPU_COUNT}"
 export THISSCRIPTCOMPLETEPATH
-typeset -gr THISSCRIPTCOMPLETEPATH="$(basename "$0")"   # § This goes in the FATHER-MOTHER script
+typeset -r THISSCRIPTCOMPLETEPATH="$(basename "$0")"   # § This goes in the FATHER-MOTHER script
 export _err
 typeset -i _err=0
 export USER_HOME="$HOME"
@@ -224,6 +224,10 @@ function _breakable_copy_directory(){
 	local _target="${_to}/${_new_folder_name}"
   (( DEBUG )) && echo "_target:${_target}"
   enforce_variable_with_value _target "${_target}"
+	local _date="$(cut -d- -f4- <<<"${_new_folder_name}")"
+  (( DEBUG )) && echo "_date:${_date}"
+  enforce_variable_with_value _date "${_date}"
+  Checking "_date :${_date}:"
 	local -i _err=0
 	local _log_path="${_to}/breakage.log"
   (( DEBUG )) && echo "_log_path:${_log_path}"
@@ -234,12 +238,16 @@ function _breakable_copy_directory(){
 	_err=$?
 	local _last_commit="$(<COMMIT)"
 	enforce_variable_with_value _last_commit "${_last_commit}"
-	if [[ "${_last_commit,,}" == *"build(deps)"* ]]  || \
-		[[ "${_last_commit,,}" == *"dependabot"* ]] || \
-		[[ "${_last_commit,,}" == *"cleanup"* ]] || \
-		[[ "${_last_commit,,}" == *"bump"* ]] || \
-		( [[ "${_last_description,,}" == *"deps"* ]] && [[ "${_last_description,,}" == *"bump"* ]] ) || \
-		( [[ "${_last_description,,}" == *"deps"* ]] && [[ "${_last_description,,}" == *"build"* ]] )  \
+	local _last_lower="$(to_lowercase "${_last_commit}")"
+	Checking "_breakable_copy_directory _last_lower :${_last_lower}:$?"
+	# exit 0
+	enforce_variable_with_value _last_lower "${_last_lower}"
+	if [[ "${_last_lower}" == *"build(deps)"* ]]  || \
+		[[ "${_last_lower}" == *"dependabot"* ]] || \
+		[[ "${_last_lower}" == *"cleanup"* ]] || \
+		[[ "${_last_lower}" == *"bump"* ]] || \
+		( [[ "${_last_lower}" == *"deps"* ]] && [[ "${_last_lower}" == *"bump"* ]] ) || \
+		( [[ "${_last_lower}" == *"deps"* ]] && [[ "${_last_lower}" == *"build"* ]] )  \
    ; then
 	{
 		Skipping "build(deps) dependabot commit from bot"
@@ -249,7 +257,7 @@ function _breakable_copy_directory(){
 
   [ $_err -eq 0 ] && log "${_log_path}" "INFO" "${_last_commit}"
 	# local _again_folder_name="$(get_commit_message "${_commit_number}" "${_commit}")"
-	local _again_folder_name="$(echo -n "${_last_commit,,}" | \
+	local _again_folder_name="$(echo -n "${_last_lower}" | \
 		sed 's/merge pull request #....//g'  | \
 		sed 's/ from//g' | \
 		sed 's/ fix//g' | \
@@ -314,6 +322,8 @@ function _breakable_copy_directory(){
 	Message $BASHLINENO $(pwd)
 	Message linking ln -s ../../node_modules node_modules
 	ln -s ../../node_modules node_modules
+	Message linking ln -s ../../vendor vendor
+	ln -s ../../vendor vendor
 	# if ("${_packager}" install 2>&1) ; then
 	# {
 	# 	_err=$?
@@ -333,14 +343,14 @@ function _breakable_copy_directory(){
   #  [ $_err -gt 0 ] && log "${_log_path}" "_FAILED_" "TEST"
   # Patchy thingy here
   # second attempt to get the of the folder right when the folder name defaults to :123---- like this
-  if it_exists_with_spaces "${_to}/${_commit_number}_${_again_folder_name}" ; then
+  if it_exists_with_spaces "${_to}/${_commit_number}_${_again_folder_name}_${_date}" ; then
 	{
-		Message rm -rf "${_to}/${_commit_number}_${_again_folder_name}"
-		rm -rf "${_to}/${_commit_number}_${_again_folder_name}"
+		Message rm -rf "${_to}/${_commit_number}_${_again_folder_name}_${_date}"
+		rm -rf "${_to}/${_commit_number}_${_again_folder_name}_${_date}"
 	}
 	fi
-	Message Moving 1 mv ${LIGHTYELLOW}"${_target}" ${CYAN}to${LIGHTYELLOW} "${_to}/${_commit_number}_${_again_folder_name}"
-	mv "${_target}"  "${_to}/${_commit_number}_${_again_folder_name}"
+	Message Moving 1 mv ${LIGHTYELLOW}"${_target}" ${CYAN}to${LIGHTYELLOW} "${_to}/${_commit_number}_${_again_folder_name}_${_date}"
+	mv "${_target}"  "${_to}/${_commit_number}_${_again_folder_name}_${_date}"
 	# _err=$?
 	# [ $_err -gt 0 ] && touch "${_new_folder_name}._FAILED_.MVSECONDATTEMPT" && return 1
 	# [ $_err -gt 0 ] && log "${_log_path}" "_FAILED_" "MVSECONDATTEMPT" && return 1
@@ -411,6 +421,8 @@ function _break_all_commits(){
 	local _new_folder_name=""
 	local _commit_description=""
 	local _last_description=""
+	local _last_lower=""
+
 	while read -r _commit ; do
 	{
 		Message trying "${_commit}"
@@ -424,18 +436,27 @@ function _break_all_commits(){
   	#       if the description is the same. Then I assume is the part of a group commit
   	#       so it will be ignored to be cloned
   	_new_folder_name="$(get_commit_message "${_current_commit}" "${_commit}")"
+  	Checking "_new_folder_name: :${_new_folder_name}:"
   	enforce_variable_with_value _new_folder_name "${_new_folder_name}"
-		echo "${_new_folder_name}" | parallel -j ${CPU_COUNT} echo {}
+	  # echo "${_new_folder_name}" | parallel -j ${CPU_COUNT} echo {}
+  	if ([[ -n "${_last_description}" ]] ) ; then
+  	{
+			_last_lower="$(to_lowercase "${_last_description}")"
+	  	Checking " _last_lower :${_last_lower}:$?"
+	  	enforce_variable_with_value _last_lower "${_last_lower}"
+	  	# exit 0
+  	}
+    fi
   	if ([[ -n "${_last_description}" ]] ) &&
   		(
   			[[ "${_last_description}" == *"${_commit_description}"* ]] ||
-  			[[ "${_last_description,,}" == *"cleanup"* ]] ||
-  			[[ "${_last_description,,}" == *"readme"* ]] ||
-  			[[ "${_last_description,,}" == *"build(deps)"* ]] ||
-  			[[ "${_last_description,,}" == *"bdependabot"* ]] ||
-  			[[ "${_last_description,,}" == *"bump"* ]] ||
-  			( [[ "${_last_description,,}" == *"deps"* ]] && [[ "${_last_description,,}" == *"bump"* ]] ) ||
-  			( [[ "${_last_description,,}" == *"deps"* ]] && [[ "${_last_description,,}" == *"build"* ]] )
+  			[[ "${_last_lower}" == *"cleanup"* ]] ||
+  			[[ "${_last_lower}" == *"readme"* ]] ||
+  			[[ "${_last_lower}" == *"build(deps)"* ]] ||
+  			[[ "${_last_lower}" == *"bdependabot"* ]] ||
+  			[[ "${_last_lower}" == *"bump"* ]] ||
+  			( [[ "${_last_lower}" == *"deps"* ]] && [[ "${_last_lower}" == *"bump"* ]] ) ||
+  			( [[ "${_last_lower}" == *"deps"* ]] && [[ "${_last_lower}" == *"build"* ]] )
   		) ; then
   	{
   		Skipping "${_counter}_ 'bump, cleanup, build + deps, bump + deps, readme, dependabot, build(deps), repeated' commits with same description: <${_commit_description}>"
@@ -477,19 +498,20 @@ function _break_all_commits(){
 # "
 if [ -z ${1} ] ; then
 {
-echo '
+echo "
 
   Breaks a git repo into several folders
 
-                         Base Git folder                                Folder where breakage will go       installer
-_break_all_commits "/home/user/_/work/projects-web/website" "/home/user/_/work/projects-web/breakage/"       yarn
-_break_all_commits "/home/user/_/work/client/rnd/project" "/home/zeus/_/work/client/rnd/project_breakage/"   bundle
+                                Base Git folder                  Folder where breakage will go       installer
+$0 /home/user/_/work/projects-web/website /home/user/_/work/projects-web/breakage/       yarn
+$0 /home/user/_/work/client/rnd/project /home/zeus/_/work/client/rnd/project_breakage/   bundle
 
-'
+"
 }
 else
 {
-	_break_all_commits "${*}"
+	# "${*}"
+	_break_all_commits ${*}
 }
 fi
 echo "🥦"

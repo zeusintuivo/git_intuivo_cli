@@ -1,0 +1,17 @@
+#!/bin/bash
+# set committer date to author date for the latest git commit
+env GIT_COMMITTER_DATE=$(git log -1 HEAD | grep Date: | cut -d' ' -f2-) git commit --amend --no-edit --date=$GIT_COMMITTER_DATE
+
+#!/usr/bin/fish
+# fish shell use (...) instead of $(...)
+env GIT_COMMITTER_DATE=(git log -1 HEAD | grep Date: | cut -d' ' -f2-) git commit --amend --no-edit --date=$GIT_COMMITTER_DATE
+
+
+#!/bin/bash
+# when $GIT_COMMITTER_DATE does not change commit date, we can use filter-branch (WARNING: bleeding sharp edge tool)
+# this will set commit date & author date for the HEAD commit of branch `master`
+git filter-branch -f --env-filter 'export GIT_AUTHOR_DATE="2020-04-01T04:01:00"; export GIT_COMMITTER_DATE="2021-04-01T04:01:00";' master ^master^
+
+#!/usr/bin/fish
+# in fish shell, we should escape the caret (^)
+git filter-branch -f --env-filter 'export GIT_AUTHOR_DATE="2020-04-01T04:01:00"; export GIT_COMMITTER_DATE="2021-04-01T04:01:00";' master \^master^
