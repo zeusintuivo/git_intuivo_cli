@@ -709,7 +709,7 @@ words_match_insensitively(){
         export BASH_VERSION=$(bash --version | extract_version  |  remove_letters | head -1)
     }
     fi
-    if [[ "$(cut -d. -f1 <<< ${BASH_VERSION})" > "3" ]] ; then
+    if [[ "$(cut -d. -f1 <<< ${BASH_VERSION})" > "4" ]] ; then
     {
         local lower_case_preposition="${preposition,,}"   # bash Convert string to lowercase Bash 4 REF: https://stackoverflow.com/questions/2264428/converting-string-to-lower-case-in-bash-shell-scripting
         local lower_case_try_word="${try_word,,}"         # bash Convert string to lowercase Bash 4 REF: https://stackoverflow.com/questions/2264428/converting-string-to-lower-case-in-bash-shell-scripting
@@ -1490,13 +1490,15 @@ display_error_during_commit() {
 check_bash_version_required() {
     if [ ! -z ${BASH_VERSION+x} ] ; then {      # check if a variable is set and not empty
         local VERSION=$BASH_VERSION
-    } else {
+    }
+    else
+    {
         export BASH_VERSION=$(bash --version | extract_version  |  remove_letters | head -1)
     }
     fi
     if [[ "$(cut -d. -f1 <<< ${BASH_VERSION})" < "4" ]] ; then
     {
-        echo "Bash Version does not accept Bash Expressions like These -( ,, ^^ # ) chars inside \${VARNAME} as operands to create expresions. "
+        echo "Friendly warning. commit. said: Old Bash Version ${BASH_VERSION} does not accept Bash Expressions like These -( ,, ^^ # ) chars inside \${VARNAME} as operands to create expresions. "
     }
     fi
 } # end check_bash_version_required
