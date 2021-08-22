@@ -294,6 +294,7 @@ function _breakable_copy_directory(){
 	}
 	fi
 	directory_does_not_exist_with_spaces "${_target}"
+	echo "${_new_folder_name}" >> COMMIT
 	Message "commit #:${_commit_number} ${_new_folder_name}"
 	Message cp -R "${_from}" "${_target}"
 	cp -R "${_from}" "${_target}"
