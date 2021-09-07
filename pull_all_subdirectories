@@ -9,31 +9,21 @@
   local one_item
   local one_action
   local action
-  local _err=0
+
   while read -r one_item; do
   {
     if [ ! -z "${one_item}" ] ; then  # if not empty
     {
-      action="${local_actions/\{\#\}/$one_item}"  # replace value inside string substitution expresion bash
-      action="${action/\{\#\}/$one_item}"  # replace value inside string substitution expresion bash
-      action="${action/\{\#\}/$one_item}"  # replace value inside string substitution expresion bash
-      action="${action/\{\#\}/$one_item}"  # replace value inside string substitution expresion bash
-      action="${action/\{\#\}/$one_item}"  # replace value inside string substitution expresion bash
-      echo -e  "----\n${action}\n-----s"
-      eval ${action}
-      _err=$?
-      exit 1
-      # while read -r one_action; do
-      # {
-      #   if [ ! -z "${one_action}" ] ; then  # if not empty
-      #   {
-      #     action="${one_action/\{\#\}/$one_item}"  # replace value inside string substitution expresion bash
-      #     eval ${action}
-      #     _err=$?
-      #   }
-      #   fi
-      # }
-      # done <<< "${local_actions}"
+      while read -r one_action; do
+      {
+        if [ ! -z "${one_action}" ] ; then  # if not empty
+        {
+          action="${one_action/\{\#\}/$one_item}"  # replace value inside string substitution expresion bash
+          eval ${action}
+        }
+        fi
+      }
+      done <<< "${local_actions}"
     }
     fi
   }
@@ -50,11 +40,7 @@ echo \". \"
 echo \". . . . . . .       {#} \"
 cd \"${CURDIR}/{#}\"
 pwd
-DIEPULLCURRENTBRANCH=\$(git rev-parse --abbrev-ref HEAD);
 [[ -d .git/ ]] && pull
-_err=\$?
-[ \$_err -gt 0 ] && (git stash;   git branch --set-upstream-to=origin/\$DIEPULLCURRENTBRANCH \$DIEPULLCURRENTBRANCH;  git pull origin \$DIEPULLCURRENTBRANCH;  git stash pop;)
-[ \$_err -gt 0 ] && echo -e \"\033[38;5;202m Failed to pull {#} \"
 "
 cd "${CURDIR}"
 
