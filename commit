@@ -80,7 +80,7 @@ get_longest_name_length() {
   for ONE_CHANGED_FILES_WITH_STATUS in ${CHANGED_FILES_WITH_STATUS_WITH_TAB_CHANGED_TO_PIPE}; do
   {
     # if not empty
-    if [ ! -z "${ONE_CHANGED_FILES_WITH_STATUS}" ] ; then
+    if [ -n "${ONE_CHANGED_FILES_WITH_STATUS}" ] ; then
     {
       FILENAME_LENGTH="${#ONE_CHANGED_FILES_WITH_STATUS}"   # get string length
       (( FILENAME_LENGTH > LONGEST_NAME )) && LONGEST_NAME=$FILENAME_LENGTH
@@ -131,7 +131,7 @@ present_files() {
     local LONGEST_NAME=$(get_longest_name_length "${CHANGED_FILES_WITH_STATUS_WITH_TAB_CHANGED_TO_PIPE}")
     # echo DEBUG PRESENT "LONGEST_NAME: ${LONGEST_NAME}"
     local ONE_CHANGED_FILES_WITH_STATUS IFS STATUS FILENAME
-                if [ ! -z ${COLUMNS+x} ]; then   # check if a variable is set and not empty # in mac I got no $COLUMNS for some reason
+                if [ -n ${COLUMNS+x} ]; then   # check if a variable is set and not empty # in mac I got no $COLUMNS for some reason
                 {
                     COLUMNS=$COLUMNS
                     # echo "Columns: $COLUMNS"
@@ -156,14 +156,14 @@ present_files() {
     for ONE_CHANGED_FILES_WITH_STATUS in ${CHANGED_FILES_WITH_STATUS_WITH_TAB_CHANGED_TO_PIPE}; do
     {
         # echo DEBUG PRESENT "ONE_CHANGED_FILES_WITH_STATUS: ${ONE_CHANGED_FILES_WITH_STATUS}"
-        if [ ! -z "${ONE_CHANGED_FILES_WITH_STATUS}" ] ; then # if not empty
+        if [ -n "${ONE_CHANGED_FILES_WITH_STATUS}" ] ; then # if not empty
         {
             #  Expecting Sample "A|app/assets/javascripts/loading.js"  "${ONE_CHANGED_FILES_WITH_STATUS##*-|}"
             IFS=\| read STATUS FILENAME <<EOF
 ${ONE_CHANGED_FILES_WITH_STATUS}
 EOF
 
-            if [ ! -z "${FILENAME}" ] ; then
+            if [ -n "${FILENAME}" ] ; then
             {
                 FILENAME_LENGTH="${#FILENAME}"   # get string length
                 # echo DEBUG PRESENT "FILENAME: ${FILENAME}"
@@ -269,7 +269,7 @@ EOF
                 }
                 fi
                 # Extra commit details presentation - start
-                if [[ ! -z "${EXTRA_DETAILS_NOT_COMMITED_YET}" ]] && [[ "${STATUS}" != "M°" ]] ; then
+                if [[ -n "${EXTRA_DETAILS_NOT_COMMITED_YET}" ]] && [[ "${STATUS}" != "M°" ]] ; then
                 {
                     SEEKING="NCY"
                     IMPLACING=$(echo -e "${FILENAME}:\\033[38;5;202m")
@@ -283,12 +283,12 @@ EOF
                     # Statements
                     echo -e "${blue23} • ${blue30} not yet commited file: git add -p ${FILENAME};${reset} git commit ${FILENAME}"
                     REMOVED=$(git log -p -n 1  "${FILENAME}" | grep  '\(^@@\|::\|^\-\)' | sed '/^--/d' | sed '/^@@/d' )
-                    if [[ ! -z "${REMOVED}" ]] ; then
+                    if [[ -n "${REMOVED}" ]] ; then
                     {
 
                         echo -e "${blue23} • ${red}  removed "
                         echo -e "${red}---- ${yellow214}"
-                        if [[ ! -z "${PYGMENTIZE_COMMAND_EXISTS}" ]] && [[ "${PYGMENTIZE_COMMAND_EXISTS}" == *"command not found"* ]]; then
+                        if [[ -n "${PYGMENTIZE_COMMAND_EXISTS}" ]] && [[ "${PYGMENTIZE_COMMAND_EXISTS}" == *"command not found"* ]]; then
                         {
                             REMOVED=$(git log -p -n 1  "${FILENAME}" | grep  '\(^@@\|::\|^\-\)' | sed 's/^-//g' )
                         }
@@ -302,11 +302,11 @@ EOF
                     }
                     fi
                     ADDED=$(git log -p -n 1  "${FILENAME}" | grep  '\(^@@\|::\|^\+\)' | sed '/^++/d' | sed '/^@@/d' )
-                    if [[ ! -z "${ADDED}" ]] ; then
+                    if [[ -n "${ADDED}" ]] ; then
                     {
                         echo -e "${blue23} • ${green}  Added "
                         echo -e "${green}++++ ${yellow214}"
-                        if [[ ! -z "${PYGMENTIZE_COMMAND_EXISTS}" ]] && [[ "${PYGMENTIZE_COMMAND_EXISTS}" == *"command not found"* ]]; then
+                        if [[ -n "${PYGMENTIZE_COMMAND_EXISTS}" ]] && [[ "${PYGMENTIZE_COMMAND_EXISTS}" == *"command not found"* ]]; then
                         {
                             ADDED=$(git log -p -n 1  "${FILENAME}" | grep  '\(^@@\|::\|^\+\)' | sed 's/^+//g' )
                         }
@@ -459,7 +459,7 @@ commit_status_continue() {
     # M°|config/locales/de.yml
     # M°|config/locales/en.yml
 
-    if [[ ! -z "${CHANGED_FILES_WITH_GSB}" ]] ; then
+    if [[ -n "${CHANGED_FILES_WITH_GSB}" ]] ; then
     {
         echo -e "${green}++++ ${yellow214}"
         echo -e "${blue23} • ${blue30} Git Status - ${cyan} Pending to commit  ${reset}"
@@ -477,7 +477,7 @@ commit_status_continue() {
     #LAST_THREE_LOGS=$(git log -3 --stat | sed 's/^ /_/g'| sed 's/^_   /----/g' | grep '^----' | sed s/^'----'// | trim_start_space |xargs -I {} echo "LOG|{}")
     LAST_THREE_LOGS=$(git log -3 --stat | sed 's/^ /_/g'| sed 's/^_   /----/g' | grep '^----' | sed s/^'----'// | trim_start_space |xargs -I {} echo "${green}+${blue30}-\033[38;5;153m {}")
 
-    if [[ ! -z "${LAST_THREE_LOGS}" ]] ; then
+    if [[ -n "${LAST_THREE_LOGS}" ]] ; then
     {
         echo -e "${green}+${blue30}---- ${yellow214}"
         echo -e "${green}+${blue30}-${blue23} • ${yellow214}Last 3 logs lines - ${cyan}   ${reset}"
@@ -488,7 +488,7 @@ commit_status_continue() {
     fi
 
     JUST_GIT_STATUS=$(echo "${CHANGED_FILES_WITH_GSB}" | xargs -I {} echo "${green}+${blue30}#${blue23} • ${yellow214} {}" | sed 's/°/ /g' | sed 's/[|]/ /g')
-    if [[ ! -z "${JUST_GIT_STATUS}" ]] ; then
+    if [[ -n "${JUST_GIT_STATUS}" ]] ; then
     {
         echo -e "${green}+${blue30}#### ${yellow214}"
         echo -e "${green}+${blue30}#${blue23} • ${yellow214} git status -sb   ${reset}"
@@ -544,11 +544,11 @@ if  [[ -z "${1}" ]] ; then
 }
 fi
 
-if         [[ ! -z "${1}" && "${1}" == "-h" ]] \
-    ||  [[ ! -z "${1}" && "${1}" == "--h" ]] \
-    ||  [[ ! -z "${1}" && "${1}" == "-help" ]] \
-    ||  [[ ! -z "${1}" && "${1}" == "--help" ]] \
-    ||  [[ ! -z "${1}" && "${1}" == "help" ]] ; then
+if         [[ -n "${1}" && "${1}" == "-h" ]] \
+    ||  [[ -n "${1}" && "${1}" == "--h" ]] \
+    ||  [[ -n "${1}" && "${1}" == "-help" ]] \
+    ||  [[ -n "${1}" && "${1}" == "--help" ]] \
+    ||  [[ -n "${1}" && "${1}" == "help" ]] ; then
 {
     display_help
     exit 69; # CONTROLLED ERROR EXIT - AFTER DISPLAYED HELP
@@ -557,7 +557,7 @@ fi
 scoop_filename_or_directory() {
     local try_exists="${1}"
     local FILENAME="${2}"
-    if [[ ! -z "${try_exists}" ]] && [[ -f "${try_exists}" || -d "${try_exists}/"  ]] ; then
+    if [[ -n "${try_exists}" ]] && [[ -f "${try_exists}" || -d "${try_exists}/"  ]] ; then
     {
         FILENAME="${FILENAME}
 ${try_exists}"
@@ -576,7 +576,7 @@ it_looks_like_a_filename(){
     #local file_was_listed_as_deleted=$(file_was_deleted "${try_exists}")
     #(( DEBUG_VERB_READING_LOGIC )) && ( file_was_deleted "${try_exists}" ) && echo " file_was_listed_as_deleted ${try_exists}"
     #(( DEBUG_VERB_READING_LOGIC )) && echo "                +-- it_looks_like_a_filename is trying $try_exists "
-    if  [[ ! -z "${try_exists}" ]] ; then
+    if  [[ -n "${try_exists}" ]] ; then
     {
         if [[ -f "${try_exists}" || -d "${try_exists}/" ]] ; then
         {
@@ -703,7 +703,7 @@ words_match_insensitively(){
 
     # echo "preposition:${preposition}"
     # exit 69;  DEBUG FOR PREPOSITION FAILING IN MAC OR FREEBSD OR BASH 3.2
-    if [ ! -z ${BASH_VERSION+x} ] ; then {      # check if a variable is set and not empty
+    if [ -n ${BASH_VERSION+x} ] ; then {      # check if a variable is set and not empty
         local VERSION=$BASH_VERSION
     } else {
         export BASH_VERSION=$(bash --version | extract_version  |  remove_letters | head -1)
@@ -724,7 +724,7 @@ words_match_insensitively(){
         local capitalized_preposition=$(echo "${preposition}" | sed -e "s/\b\(.\)/\u\1/g")  # Uppercasing First Letter of Words Using SED REF: https://stackoverflow.com/questions/1538676/uppercasing-first-letter-of-words-using-sed
     }
     fi
-    if [[ ! -z "${try_word}" ]] && [[ \
+    if [[ -n "${try_word}" ]] && [[ \
            "${try_word}" == "${preposition}" \
         || "${try_word}" == "${lower_case_preposition}"  \
         || "${lower_case_try_word}" == "${lower_case_preposition}"  \
@@ -791,7 +791,7 @@ FEATURE
     {
       # Here to check one_exception cotains only one value and not a the whole list
       # (( DEBUG_VERB_READING_LOGIC )) && echo  "           +___is_an_exception.one_exception=(${one_exception})"
-      if [ ! -z "${one_exception}" ] ; then  # if not empty
+      if [ -n "${one_exception}" ] ; then  # if not empty
       {
         if ( words_match_insensitively "${try_word}" "${one_exception}"  ) ; then
         {
@@ -830,7 +830,7 @@ IN"
     for one_preposition in ${prepositions}; do
     {
       # if not empty
-      if [ ! -z "${one_preposition}" ] ; then
+      if [ -n "${one_preposition}" ] ; then
       {
             if ( words_match_insensitively "${try_word}" "${one_preposition}"  ) && ( it_looks_like_a_filename "${try_FILENAME}" ) && ( ! is_an_exception "${try_FILENAME}"  ); then
             {
@@ -886,7 +886,7 @@ perform_commit() {
         echo -e "${green}+${blue30}---- ${yellow214}"
     }
     fi
-    if [[ ! -z "${options}" ]] ; then
+    if [[ -n "${options}" ]] ; then
     {
         (( DEBUG_VERB_READING_LOGIC )) &&  echo "    callling git commit -m \"${options}\" "
         THIS_COMMIT_RESULTS=$(git commit -m """${options}""" 2>&1 )  # Check and catch capture all stout sdout output, error will return 1 to $?
@@ -1082,7 +1082,7 @@ get_list_of_deleted_files_not_commited() {
 
             scoop_files_deleted=$(echo "${not_staged}" | grep "deleted:" | sed "s/deleted://"  | trim_start_space )
             #(( DEBUG_VERB_READING_LOGIC )) && echo " +--------: scooped  del not_staged : $scoop_files_deleted"
-            if [[ ! -z "${scoop_files_deleted}" ]] ; then  # Not changed and not new and not deleted
+            if [[ -n "${scoop_files_deleted}" ]] ; then  # Not changed and not new and not deleted
             {
                 filenames="${filenames}
 ${scoop_files_deleted}"
@@ -1130,7 +1130,7 @@ file_was_deleted() {
 
             scoop_files_deleted=$(echo "${CHECK_GIT_STATUS}" | grep "deleted:" | sed "s/deleted://"  | trim_start_space | grep "${ONE_FILENAME}" )
             #(( DEBUG_VERB_READING_LOGIC )) && echo " +--------: scooped  del not_staged : $scoop_files_deleted"
-            if [[ ! -z "${scoop_files_deleted}" ]] ; then  # Not changed and not new and not deleted  ---perhaps add...&& "${scoop_files_deleted}" == *"${ONE_FILENAME}"*
+            if [[ -n "${scoop_files_deleted}" ]] ; then  # Not changed and not new and not deleted  ---perhaps add...&& "${scoop_files_deleted}" == *"${ONE_FILENAME}"*
             {
                 return 0
             }
@@ -1179,7 +1179,7 @@ get_stagging_commands_and_filenames() {
     for ONE_FILENAME in "${filenames}"; do
     {
       # if not empty
-      if [ ! -z "${ONE_FILENAME}" ] ; then
+      if [ -n "${ONE_FILENAME}" ] ; then
       {
             if  ( file_exists_remote "${CURBRANCH}" "${ONE_FILENAME}" ) ; then
             {
@@ -1237,7 +1237,7 @@ stage_and_commit_several_files() {
     #while read -r ONE_FILENAME; do    # This captures the stdin and does not allow other subprocesses to ask questions like git add -p will be ignored
     {
       # if not empty
-      if [ ! -z "${ONE_FILENAME}" ] ; then
+      if [ -n "${ONE_FILENAME}" ] ; then
       {
             (( DEBUG_VERB_READING_LOGIC )) && echo " +-- file name :${ONE_FILENAME}:"
             (( DEBUG_VERB_READING_LOGIC )) && ( file_exists_local "${ONE_FILENAME}" )  && echo " +-- file_exists_local :${ONE_FILENAME}: said true it exists"
@@ -1323,7 +1323,7 @@ perform_git_add(){
     local MESSAGE=""
     local OPTIONS=$@;
     (( DEBUG_VERB_READING_LOGIC )) && echo """OPTIONS:${OPTIONS}"""
-    [[ ! -z "${ACTION}" ]] && local ACTION="""${ACTION}"""
+    [[ -n "${ACTION}" ]] && local ACTION="""${ACTION}"""
 
     local try_FILENAME1="${1}"  # if calling directly    I wrote then:  commit filename  message blah blah
     local try_FILENAME2="${2}"  # if calling indirectly  I wrote then:  added  filename  message blah blah
@@ -1381,7 +1381,7 @@ ${try_FILENAME}"
         }
         fi
 
-        [[ ! -z "${back_try_WORD}" ]] && OPTIONS=$(try_preposition_and_remove_if_filename """${OPTIONS}""" """${back_try_WORD}"""  """${try_FILENAME}""")
+        [[ -n "${back_try_WORD}" ]] && OPTIONS=$(try_preposition_and_remove_if_filename """${OPTIONS}""" """${back_try_WORD}"""  """${try_FILENAME}""")
 
         back_try_WORD="${try_FILENAME}"
         (( COUNTER++ )) # if (( $COUNTER > 37 )) ; then
@@ -1418,11 +1418,11 @@ ${try_FILENAME}"
         (( DEBUG_VERB_READING_LOGIC )) && (( $? != 0 )) && echo "buffer seems  error"
         (( DEBUG_VERB_READING_LOGIC )) && echo $COMMIT_RESULTS
         (( DEBUG_VERB_READING_LOGIC )) && exit 69; # DEBUG EXIT - WHEN $DEBUG_VERB_READING_LOGIC = 1
-        #if [[ ! -z "${COMMIT_RESULTS}" ]] ;  then   # if error buffer if empty
+        #if [[ -n "${COMMIT_RESULTS}" ]] ;  then   # if error buffer if empty
         local ERROR_DID_NOT_HAPPENED=""
         [[ "${PROCESSOR_ERROR}" == *"MAC"* ]] && [ $err_buff == 0 ] && ERROR_DID_NOT_HAPPENED="1"
         [[ "${PROCESSOR_ERROR}" == *"INTEL"* ]] && (( $err_buff == 0 )) && ERROR_DID_NOT_HAPPENED="1"
-        if [ "${ERROR_DID_NOT_HAPPENED}" ] && [[ ! -z "${COMMIT_RESULTS}" ]]  ;  then   # if error buffer if empty
+        if [ "${ERROR_DID_NOT_HAPPENED}" ] && [[ -n "${COMMIT_RESULTS}" ]]  ;  then   # if error buffer if empty
         {
             if [[ "${ERROR}" == "NO" ]] ;  then   # if error buffer if empty
             {
@@ -1488,7 +1488,7 @@ display_error_during_commit() {
 } # end display_error_during_commit
 
 check_bash_version_required() {
-    if [ ! -z ${BASH_VERSION+x} ] ; then {      # check if a variable is set and not empty
+    if [ -n ${BASH_VERSION+x} ] ; then {      # check if a variable is set and not empty
         local VERSION=$BASH_VERSION
     }
     else
@@ -1528,7 +1528,7 @@ PROCESSOR_ERROR=$(test_positives)
 
 #Using ACTION FROM VERBS SET IN action_template will take precedence ... at least that is the idea
 [[ -z "${THISSCRIPTNAME}" ]] && THISSCRIPTNAME=`basename "$0"`
-[[ ! -z "${ACTION}" ]] && THISSCRIPTNAME="${ACTION}"
+[[ -n "${ACTION}" ]] && THISSCRIPTNAME="${ACTION}"
 
 # Globals
 COMMIT_RESULTS=""
