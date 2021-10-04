@@ -45,7 +45,7 @@ echo ""
 
 #merge
 echo -e ""
-echo -e "\033[38;5;28m ===  ${RED}Rebase ${CYAN}$TARGETBASEBRANCH \033[38;5;28m into ${CURBRANCH}  \033[38;5;28m === \033[38;5;214m"
+echo -e "\033[38;5;28m ===  ${YELLOW_OVER_DARKBLUE}rebase ${CYAN}$TARGETBASEBRANCH \033[38;5;28m into ${CYAN}${CURBRANCH}  \033[38;5;28m === \033[38;5;214m"
 echo -e ""
 MERGE_RESULTS=$(rebase "$TARGETBASEBRANCH" 2>&1) # Check and catch capture all stout sdout output, error will return none 0 to $?)
 echo -e ""
