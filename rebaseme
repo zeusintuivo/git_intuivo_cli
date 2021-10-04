@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+#!/bin/bash
+#
+# @author Zeus Intuivo <zeus@intuivo.com>
+#
+[[ -z "${FOUND_DIR_JOURNAL}" ]] && . journal_find_journal_dir # gets FOUND_DIR_JOURNAL
+[[ -z "${green50}" ]]          && . $FOUND_DIR_JOURNAL/journal_get_bash_colors     # gets cyan blue23 blue30 blue33 green green50 red yellow220 yellow214 gray238 gray242 orange209 orange208 white15 reset
+[[ -z "${JOURNAL_HOME}" ]]     && . $FOUND_DIR_JOURNAL/journal_get_journal_config  # gets JOURNAL_HOME   CURRENTDATE   CURRENT_LONG_DATE
+[[ -z "${TARGETBASEBRANCH}" ]] && . $FOUND_DIR_JOURNAL/journal_get_target_branch   # gets TARGETBASEBRANCH
+[[ -z "${CURBRANCH}" ]]        && . $FOUND_DIR_JOURNAL/journal_get_current_branch  # gets CURBRANCH CURRENTDATE
+
+
+# read arguments from stdin, command line
+if [[ -z "${1}" ]]  ; then
+{
+	COMMIT_MESSAGE="Updating branch ${CURBRANCH} from ${TARGETBASEBRANCH} branch. Adding and committing beforehand."
+}
+else
+{
+	COMMIT_MESSAGE="${@}"
+}
+fi
+
+commit "${COMMIT_MESSAGE}"
+pull
+push
+
+
+#BRANCH FROM ..master or develop or etc
+echo -e ""
+echo -e "\033[38;5;30m === Switch Branch to $TARGETBASEBRANCH \033[38;5;30m === \033[38;5;214m"
+echo -e ""
+branch "${TARGETBASEBRANCH}"
+echo -e ""
+
+#pull
+pull
+
+#branch
+echo -e ""
+echo -e "\033[38;5;29m === Branch back to ${CURBRANCH} \033[38;5;29m === \033[38;5;214m"
+echo -e ""
+branch "${CURBRANCH}"
+echo ""
+
+#merge
+echo -e ""
+echo -e "\033[38;5;28m ===  ${RED}Rebase ${CYAN}$TARGETBASEBRANCH \033[38;5;28m into ${CURBRANCH}  \033[38;5;28m === \033[38;5;214m"
+echo -e ""
+MERGE_RESULTS=$(rebase "$TARGETBASEBRANCH" 2>&1) # Check and catch capture all stout sdout output, error will return none 0 to $?)
+echo -e ""
+
+if [[ "${MERGE_RESULTS}" == *"conflicts"* ]]  ; then
+{
+  MERGECONFLICTED="$(echo -en "${MERGE_RESULTS}" |  grep "CONFLICT:" | tail -1 | cut -d: -f2- )"
+  echo -e "${red}${MERGE_RESULTS}${yellow214}"
+  nur "<<<<<"
+  echo -e ""
+  echo -e "\033[38;5;27m ===  fix ${RED}Conflicts \033[38;5;27m from ${CYAN}$TARGETBASEBRANCH \033[38;5;27m into ${CURBRANCH}  === \033[38;5;214m"
+  echo -e "\033[38;5;26m === then or add conflicted file  \033[38;5;26m === \033[38;5;214m"
+  echo -e "\033[38;5;25m === sample ${RED} git add ${MERGECONFLICTED} \033[38;5;25m === \033[38;5;214m"
+  echo -e ""
+  echo -e "\033[38;5;24m === then  continue to rebase \033[38;5;24m === \033[38;5;214m"
+  echo -e "\033[38;5;23m === sample ${RED} git rebase --continue \033[38;5;23m === \033[38;5;214m"
+  echo -e "\033[38;5;22m === then push  \033[38;5;22m === \033[38;5;214m"
+  echo -e "\033[38;5;21m === sample ${RED} git push \033[38;5;21m === \033[38;5;214m"
+  echo -e "\033[38;5;20m === then ${YELLOW_OVER_DARKBLUE} repeat until rebase is done \033[38;5;20m === \033[38;5;214m"
+  exit 1
+}
+else
+{
+  echo -e "${reset}${MERGE_RESULTS}"
+}
+fi
+
+
+#status
+echo -e ""
+echo -e "\033[38;5;27m === Status === \033[38;5;214m"
+echo -e ""
+
+if command -v gsb >/dev/null 2>&1; then
+  gsb
+elif command -v status >/dev/null 2>&1; then
+  status
+else
+  git status;
+fi
+

@@ -37,15 +37,18 @@
 # C H E C K   H O W   C O M P U T E R   H A N D L E S   E R R O R S   --Start
 #
 test_positives(){
-  KIND=""
-  ls werwerwerwerwerwerwerwerwerwerwerr >/dev/null 2>&1;
+  touch /tmp/WERWERWERWERWERWERWERWERWERWERWERR
+  local KIND=""
+  ls /tmp/werwerwerwerwerwerwerwerwerwerwerr >/dev/null 2>&1;
   if (( $? == 0 )) ;  then  # Intel processor
     KIND="INTEL"
   fi
+  ls /tmp/werwerwerwerwerwerwerwerwerwerwerr >/dev/null 2>&1;
   if [ $? == 0 ]; then   # Mac Intel processor
     KIND="${KIND}MAC"
   fi
   echo "${KIND}"
+  return 0
 }
 PROCESSOR_ERROR=$(test_positives)
 # DEBUG MACPOSITIVE MACPOSITIVE echo "${MACPOSITIVE}"
@@ -68,5 +71,5 @@ if [[ "${test_project_part}" == *" 1 ${GIT_USER_NAME}"* ]] ; then
 }
 fi
 
-# rebase
+# merge
 git rebase "$@";
