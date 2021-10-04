@@ -52,7 +52,7 @@ echo -e ""
 
 if [[ "${MERGE_RESULTS}" == *"conflicts"* ]]  ; then
 {
-  MERGECONFLICTED="$(echo -en "${MERGE_RESULTS}" |  grep "CONFLICT:" | tail -1 | cut -d: -f2- )"
+  MERGECONFLICTED="$(echo -en "${MERGE_RESULTS}" |  grep "CONFLICT" | tail -1 | cut -d' ' -f2- | sed 's/ /\n/g' | tail -1 )"
   echo -e "${red}${MERGE_RESULTS}${yellow214}"
   nur "<<<<<"
   echo -e ""
