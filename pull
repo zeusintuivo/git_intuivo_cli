@@ -19,7 +19,7 @@
       if [ -f .temp_keys ] ; then
         LOAD_TEMP_KEYS=$(<.temp_keys)
         eval "${LOAD_TEMP_KEYS}"
-        if [[ ! -z "${SSH_KEY}" ]] && [[ "${GITUSER}" != "${GIT_USER_NAME}" ]] ; then
+        if [[ -n "${SSH_KEY}" ]] && [[ "${GITUSER}" != "${GIT_USER_NAME}" ]] ; then
           sshswitchkey "${SSH_KEY}"
           GIT_USER_NAME=$(command git config user.name 2> /dev/null)
         fi
@@ -83,8 +83,8 @@ show_lines(){
   local one_line res
   while read -r one_line; do
   {
-    [[ ! -z "${one_line}" ]] && [[ "${one_line}" == *"|"* ]] && res=$(echo "${YELLOW214}${one_line}" | sed "s/\(+\)/\\\\033[01;32m\1\\\\033[38;5;214m/g" | sed "s/\(-\)/\\\\033[01;31m\1\\\\033[38;5;214m/g" | sed "s/\(|\)/\\\\033[38;05;93m\1\\\\033[38;5;241m/g")
-    [[ ! -z "${one_line}" ]] && [[ "${one_line}" == *"|"* ]] && echo -e "${res}"
+    [[ -n "${one_line}" ]] && [[ "${one_line}" == *"|"* ]] && res=$(echo "${YELLOW214}${one_line}" | sed "s/\(+\)/\\\\033[01;32m\1\\\\033[38;5;214m/g" | sed "s/\(-\)/\\\\033[01;31m\1\\\\033[38;5;214m/g" | sed "s/\(|\)/\\\\033[38;05;93m\1\\\\033[38;5;241m/g")
+    [[ -n "${one_line}" ]] && [[ "${one_line}" == *"|"* ]] && echo -e "${res}"
   }
   done <<< "${1}"
 }
@@ -109,14 +109,16 @@ echo -e "${PURPLE_BLUE} === ${GRAY241} ${GIT_USER_NAME} ${PURPLE_BLUE} fetches f
           # if file exists, I assume this is a shallow copy
           # REF: http://stackoverflow.com/questions/6941889/is-it-safe-to-shallow-clone-with-depth-1-create-commits-and-pull-updates-aga
           # REF: https://github.com/git/git/commit/9cfde9ee8f6dc82365f1e977935960f34108076b documentation on Shallow I viewd on 2016 07 July 02
+          err_buff=$?
           if [[ -f ".git/shallow" ]] ;  then
               fetch_result=$(git fetch --depth 1 2>&1 )  # Check and catch capture all stout sdout output, error will return 1 to $?)
+              err_buff=$?
             else
               fetch_result=$(git fetch 2>&1 )  # Check and catch capture all stout sdout output, error will return 1 to $?)
+              err_buff=$?
           fi
-          err_buff=$?
             ERROR_HAPPENED=""
-            [[ "${PROCESSOR_ERROR}" == *"MAC"* ]] && [ $err_buff != 0 ] && ERROR_HAPPENED="1"
+            [[ "${PROCESSOR_ERROR}" == *"MAC"* ]] && [ $err_buff -gt 0 ] && ERROR_HAPPENED="1"
             [[ "${PROCESSOR_ERROR}" == *"INTEL"* ]] && (( $err_buff != 0 )) && ERROR_HAPPENED="1"
             if [ "${ERROR_HAPPENED}" ]  || \
               [[ "${fetch_result}" == *"Could not resolve"* ]] || \
@@ -135,7 +137,7 @@ echo -e "${PURPLE_BLUE} === ${GRAY241} ${GIT_USER_NAME} ${PURPLE_BLUE} fetches f
               [[ "${fetch_result}" == *"Repository not found"* ]] && echo -e "${BRIGHT_BLUE87} It appears YOU HAVE ${YELLOW226}NO ACCESS TO THIS FOR YOU ${RED} ${GIT_USER_NAME} ${RESET}"
               [[ "${fetch_result}" == *"Could not read from"* ]] && echo -e "${BRIGHT_BLUE87} It appears YOU HAVE ${YELLOW226}IF IT EXISTS YOU ARE NOT ALLOWED ${RED} ${GIT_USER_NAME} ${YELLOW226}!!! ${RESET}"
               echo -e "${RESET}${fetch_result}  "
-              exit 69;
+              # exit 69;
             }
             fi
         }
