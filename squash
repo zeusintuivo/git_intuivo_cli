@@ -1,0 +1,107 @@
+#!/usr/bin/env bash
+#
+# @author Zeus Intuivo <zeus@intuivo.com>
+#
+# REF: https://stackoverflow.com/questions/8482843/git-commit-bash-script
+# REF: https://stackoverflow.com/questions/28607166/how-do-i-squash-two-non-consecutive-commits-in-git-using-one-line
+# REF: https://stackoverflow.com/questions/25356810/git-how-to-squash-all-commits-on-branch
+#
+if command -v git_current_branch >/dev/null 2>&1; then # git_current_branch polyfill
+{
+  echo " "
+  echo -e "Get Branch git_current_branch installed"
+}
+else
+{
+  git_current_branch() {
+    local ref
+    ref=$(command git symbolic-ref --quiet HEAD 2> /dev/null)
+    local ret=$?
+    if [[ $ret != 0 ]]
+    then
+      [[ $ret = 128 ]] && return
+      ref=$(command git rev-parse --short HEAD 2> /dev/null)  || return
+    fi
+    echo ${ref#refs/heads/}
+  }
+}
+fi
+
+function squash_commits(){
+  local _branch=$(git_current_branch)
+  local _ticket_description=$(cut -d'/' -f2 <<< "${_branch}")
+  _ticket=$(cut -d'_' -f1 <<< "${_ticket_description}")
+  local _description=$(sed 's/-/ /g' <<<$(sed 's/_/ /g'<<<$(cut -d'_' -f2- <<< "${_ticket_description}")))
+  local _count_diff_commits=$(git rev-list --count HEAD ^master)
+  [ ${_count_diff_commits} -eq 0 ] && echo "Nothing to squash. No diff count in commits found" && return 1
+  echo "Squash count:"
+  git rev-list --count HEAD
+  echo "minus -:"
+  git rev-list --count master
+  echo "========== equals to squash:"
+  git rev-list --count HEAD ^master
+  echo "========== count be Diff without 'Merged' commits "
+  git rev-list --no-merges --count HEAD ^master
+  echo  " "
+  echo "Now doing squash  for (${_count_diff_commits}) commits reset soft HEAD against master"
+  git reset --soft HEAD~$(git rev-list --count HEAD ^master)
+  local _commit_message="[${_ticket}] ${_description}"
+
+  wait
+  # git log --oneline -n3 --pretty=%B  &> git_log.file
+  wait
+  # local _get_last_commit="$(<git_log.file)"
+  local _get_last_commit="$(git log --oneline -n3 --pretty=%B 2>&1)"
+  echo -e "        ===================== Last commit was ==================
+       ${_get_last_commit}
+        ========================================================"
+  # rm git_log.file
+  function yes_or_no() {
+    while true; do
+        read -p "$* [y/n]: " yn
+        case $yn in
+            [Yy]*) return 0  ;;
+            [Nn]*) echo "Aborted" ; return  1 ;;
+        esac
+    done
+  } # end yes no
+  echo "Proceed to commit this \"${_commit_message}\" ?"
+  function ammend_commit(){
+    read -p "Enter new commit: " _commit_message
+  } # end amment_commit
+  function yes_or_no_ammend() {
+    while true; do
+        read -p "$* [y=yes / n=no / a=amend my own commit]: " yn
+        case $yn in
+            [Aa]*) return 2  ;;
+            [Yy]*) return 0  ;;
+            [Nn]*) echo "Aborted" ; return  1 ;;
+        esac
+    done
+  } # end yes_or_no_ammend
+  local -i _err=0
+  yes_or_no_ammend
+  _err=$?
+  [ ${_err} -eq 2 ] && ammend_commit && echo "Proceed to commit this \"${_commit_message}\" ?" && (yes_or_no_ammend ;; _err=$?)
+  [ ${_err} -eq 2 ] && ammend_commit && echo "Proceed to commit this \"${_commit_message}\" ?" && (yes_or_no_ammend ;; _err=$?)
+  [ ${_err} -eq 2 ] && ammend_commit && echo "Proceed to commit this \"${_commit_message}\" ?" && (yes_or_no_ammend ;; _err=$?)
+  [ ${_err} -eq 2 ] && ammend_commit && echo "Last time ... commit this \"${_commit_message}\" ?" && (yes_or_no ;; _err=$?)
+  [ ${_err} -gt 0 ] && return 1
+  git commit -am "${_commit_message}"
+  # git log --oneline -n3 --pretty=%B  &> git_log.file
+  # _get_last_commit="$(<git_log.file)"
+  _get_last_commit="$(git log --oneline -n3 --pretty=%B 2>&1)"
+  echo "        ===================== Last commit was ==================
+       ${_get_last_commit}
+        ========================================================"
+  # rm git_log.file
+  echo "After squash now push --force ?"
+  yes_or_no
+  [ $? -gt 0 ] && return 1
+
+  echo "After squash now push --force proceeds"
+  git push --force
+
+} # end squash_commits
+
+squash_commits
