@@ -95,6 +95,7 @@ function squash_commits(){
        ${_get_last_commit}
         ========================================================"
   # rm git_log.file
+  echo " You can still do undocommit to before push."
   echo "After squash now push --force ?"
   yes_or_no
   [ $? -gt 0 ] && return 1
