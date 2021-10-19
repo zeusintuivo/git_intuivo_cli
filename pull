@@ -52,33 +52,36 @@ PROCESSOR_ERROR=$(test_positives)
 #branchname
 PULLCURRENTBRANCH=$(git rev-parse --abbrev-ref HEAD);
 
-#colors
-[[ -z "${CYAN}" ]] && CYAN="\\033[38;5;123m"
-[[ -z "${PURPLE_BLUE}" ]] && PURPLE_BLUE="\\033[38;5;93m"
-[[ -z "${GRAY241}" ]] && GRAY241="\\033[38;5;241m"
-[[ -z "${YELLOW226}" ]] && YELLOW226="\\033[38;5;226m"
-[[ -z "${YELLOW214}" ]] && YELLOW214="\\033[38;5;214m"
-[[ -z "${RESET}" ]] && RESET="\\033[0m"
-[[ -z "${RED}" ]] && RED="\\033[38;5;1m"
-[[ -z "${BRIGHT_BLUE87}" ]] && BRIGHT_BLUE87="\\033[38;5;87m"
-GRAYEDOUT="\033[01;30m"
-RED="\033[01;31m"
-GREEN="\033[01;32m"
-YELLOW="\033[01;33m"
-DARKBLUE="\033[01;34m"
-DARKGREEN="\033[38;5;22m"
-PURPLE="\033[01;35m"
-CYAN="\033[01;36m"
-WHITEBOLD="\033[01;37m"
+function load_colors() {
+  [[ -z "${CYAN}" ]] && CYAN="\\033[38;5;123m"
+  [[ -z "${PURPLE_BLUE}" ]] && PURPLE_BLUE="\\033[38;5;93m"
+  [[ -z "${GRAY241}" ]] && GRAY241="\\033[38;5;241m"
+  [[ -z "${YELLOW226}" ]] && YELLOW226="\\033[38;5;226m"
+  [[ -z "${YELLOW214}" ]] && YELLOW214="\\033[38;5;214m"
+  [[ -z "${RESET}" ]] && RESET="\\033[0m"
+  [[ -z "${RED}" ]] && RED="\\033[38;5;1m"
+  [[ -z "${BRIGHT_BLUE87}" ]] && BRIGHT_BLUE87="\\033[38;5;87m"
+  GRAYEDOUT="\033[01;30m"
+  RED="\033[01;31m"
+  GREEN="\033[01;32m"
+  YELLOW="\033[01;33m"
+  DARKBLUE="\033[01;34m"
+  DARKGREEN="\033[38;5;22m"
+  PURPLE="\033[01;35m"
+  CYAN="\033[01;36m"
+  WHITEBOLD="\033[01;37m"
 
-LIGHTGREEN="\033[38;5;83m"
-LIGHTPINK="\033[1;204m"
-LIGHTYELLOW="\033[38;5;227m"
-GREEN_OVER_DARKBLUE="\033[38;5;76m\033[48;5;17m"
-YELLOW_OVER_DARKBLUE="\033[38;5;220m\033[48;5;20m"
-DARKBLUE_OVER_DARKBLUE="\033[01;34m\033[48;5;20m"
+  LIGHTGREEN="\033[38;5;83m"
+  LIGHTPINK="\033[1;204m"
+  LIGHTYELLOW="\033[38;5;227m"
+  GREEN_OVER_DARKBLUE="\033[38;5;76m\033[48;5;17m"
+  YELLOW_OVER_DARKBLUE="\033[38;5;220m\033[48;5;20m"
+  DARKBLUE_OVER_DARKBLUE="\033[01;34m\033[48;5;20m"
 
-RESET="\033[0m"
+  RESET="\033[0m"
+} # end load_colors
+load_colors
+
 show_lines(){
   local one_line res
   while read -r one_line; do
