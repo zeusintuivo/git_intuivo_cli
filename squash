@@ -98,6 +98,17 @@ function yes_or_no() {
   done
 } # end yes no
 
+function edit_or_soft_reset() {
+  while true; do
+      read -p "$* [e/s/n]: " yn
+      case $yn in
+          [e]*) return 2  ;;
+          [s]*) return 0  ;;
+          [Nn]*) echo "Aborted" ; return  1 ;;
+      esac
+  done
+} # end yes no
+
 function yes_or_no_ammend() {
   while true; do
       read -p "$* [y=yes / n=no / a=amend my own commit]: " yn
@@ -110,6 +121,7 @@ function yes_or_no_ammend() {
 } # end yes_or_no_ammend
 
 function squash_commits(){
+  local -i _err=0
   local _branch=$(git_current_branch)
   local _ticket_description=$(cut -d'/' -f2 <<< "${_branch}")
   _ticket=$(cut -d'_' -f1 <<< "${_ticket_description}")
@@ -125,23 +137,37 @@ function squash_commits(){
   # echo -e "${PURPLE_BLUE} === ${GRAY241} ${GIT_USER_NAME} ${PURPLE_BLUE} ========== ${GRAY241}  count be Diff without 'Merged' commits  ${CYAN} ${_branch} ${PURPLE_BLUE} === ${GRAY241} ";
   # git rev-list --no-merges --count HEAD ^master
   # echo  " "
-  echo -e "${PURPLE_BLUE} === ${GRAY241} Now ${RED}doing squash  ${GRAY241}for (${_count_diff_commits}) commits reset soft HEAD against master ${CYAN} ${_branch} ${PURPLE_BLUE} === ${GRAY241} ";
-  git reset --soft HEAD~$(git rev-list --count HEAD ^master)
-  wait
-  display_last_three_commits "${_branch}"
-  local _commit_message="[${_ticket}] ${_description}"
-  display_each "$(git status -sb)"
-  echo -e "${PURPLE_BLUE} === Proceed to commit these ${RED}∆${PURPLE_BLUE}  with this --> ${RED}\"${LIGHTYELLOW}${_commit_message}${RED}\"${RESET} ${YELLOW226}?${RESET}"
-  function ammend_commit(){
-    read -p "Enter new commit: " _commit_message
-  } # end amment_commit
-
-  local -i _err=0
-  yes_or_no_ammend
+  echo -e "${PURPLE_BLUE} === Soft reset ${RED}(${LIGHTYELLOW}s${RED}) ${PURPLE_BLUE} edit squash ${RED}(${LIGHTYELLOW}e${RED})${PURPLE_BLUE} or abort ${RED}(${LIGHTYELLOW}n${RED})${YELLOW226}?${RESET}"
+  edit_or_soft_reset
   _err=$?
-  [ ${_err} -eq 2 ] && ammend_commit && echo -e "Proceed to commit these ${RED}∆${PURPLE_BLUE} with this -->  ${RED}\"${LIGHTYELLOW}${_commit_message}${RED}\"${RESET} ${YELLOW226}?${RESET}" && yes_or_no && _err=$?
-  [ ${_err} -gt 0 ] && return 1
-  git commit -am "${_commit_message}"
+  if [ ${_err} -eq 2 ] ; then
+  {
+    echo -e "${PURPLE_BLUE} === Waiting for your edit ${RESET}"
+    git rebase -i HEAD~$(git rev-list --count HEAD ^master)
+    _err=$?
+    [ ${_err} -gt 0 ] && return 1
+  }
+  else
+  {
+    git add .
+    echo -e "${PURPLE_BLUE} === ${GRAY241} Now doing ${RED}reset --soft HEAD${PURPLE_BLUE}squash  ${GRAY241}for (${_count_diff_commits}) commits reset soft HEAD against master ${CYAN} ${_branch} ${PURPLE_BLUE} === ${GRAY241} ";
+    git reset --soft HEAD~$(git rev-list --count HEAD ^master)
+    wait
+    display_last_three_commits "${_branch}"
+    local _commit_message="[${_ticket}] ${_description}"
+    display_each "$(git status -sb)"
+    echo -e "${PURPLE_BLUE} === Proceed to commit these ${RED}∆${PURPLE_BLUE}  with this --> ${RED}\"${LIGHTYELLOW}${_commit_message}${RED}\"${RESET} ${YELLOW226}?${RESET}"
+    function ammend_commit(){
+      read -p "Enter new commit: " _commit_message
+    } # end amment_commit
+
+    yes_or_no_ammend
+    _err=$?
+    [ ${_err} -eq 2 ] && ammend_commit && echo -e "Proceed to commit these ${RED}∆${PURPLE_BLUE} with this -->  ${RED}\"${LIGHTYELLOW}${_commit_message}${RED}\"${RESET} ${YELLOW226}?${RESET}" && yes_or_no && _err=$?
+    [ ${_err} -gt 0 ] && return 1
+    git commit -am "${_commit_message}"
+  }
+  fi
   display_last_three_commits "${_branch}"
   echo -e "${PURPLE_BLUE} === You can still do ${RED}undocommit${PURPLE_BLUE}  to before push."
   echo -e "${PURPLE_BLUE} === After squash now ${BRIGHT_BLUE87}push --force ${PURPLE_BLUE} ${YELLOW226}?${RESET}"
