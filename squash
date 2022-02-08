@@ -8,180 +8,253 @@
 #
 if command -v git_current_branch >/dev/null 2>&1; then # git_current_branch polyfill
 {
-  echo " "
-  echo -e "Get Branch git_current_branch installed"
+	echo " "
+	echo -e "Get Branch git_current_branch installed"
 }
 else
 {
-  git_current_branch() {
-    local ref
-    ref=$(command git symbolic-ref --quiet HEAD 2> /dev/null)
-    local ret=$?
-    if [[ $ret != 0 ]]
-    then
-      [[ $ret = 128 ]] && return
-      ref=$(command git rev-parse --short HEAD 2> /dev/null)  || return
-    fi
-    echo ${ref#refs/heads/}
-  }
+	git_current_branch() {
+		local ref
+		ref=$(command git symbolic-ref --quiet HEAD 2> /dev/null)
+		local ret=$?
+		if [[ $ret != 0 ]]
+		then
+			[[ $ret = 128 ]] && return
+			ref=$(command git rev-parse --short HEAD 2> /dev/null)  || return
+		fi
+		echo ${ref#refs/heads/}
+	}
 }
 fi
 function load_colors() {
-  [[ -z "${CYAN}" ]] && CYAN="\\033[38;5;123m"
-  [[ -z "${PURPLE_BLUE}" ]] && PURPLE_BLUE="\\033[38;5;93m"
-  [[ -z "${GRAY241}" ]] && GRAY241="\\033[38;5;241m"
-  [[ -z "${RESET}" ]] && YELLOW226="\\033[38;5;226m"
-  [[ -z "${YELLOW214}" ]] && YELLOW214="\\033[38;5;214m"
-  [[ -z "${RESET}" ]] && RESET="\\033[0m"
-  [[ -z "${RED}" ]] && RED="\\033[38;5;1m"
-  [[ -z "${BRIGHT_BLUE87}" ]] && BRIGHT_BLUE87="\\033[38;5;87m"
-  GRAYEDOUT="\033[01;30m"
-  RED="\033[01;31m"
-  GREEN="\033[01;32m"
-  YELLOW="\033[01;33m"
-  DARKBLUE="\033[01;34m"
-  DARKGREEN="\033[38;5;22m"
-  PURPLE="\033[01;35m"
-  CYAN="\033[01;36m"
-  WHITEBOLD="\033[01;37m"
+	[[ -z "${CYAN}" ]] && CYAN="\\033[38;5;123m"
+	[[ -z "${PURPLE_BLUE}" ]] && PURPLE_BLUE="\\033[38;5;93m"
+	[[ -z "${GRAY241}" ]] && GRAY241="\\033[38;5;241m"
+	[[ -z "${RESET}" ]] && YELLOW226="\\033[38;5;226m"
+	[[ -z "${YELLOW214}" ]] && YELLOW214="\\033[38;5;214m"
+	[[ -z "${RESET}" ]] && RESET="\\033[0m"
+	[[ -z "${RED}" ]] && RED="\\033[38;5;1m"
+	[[ -z "${BRIGHT_BLUE87}" ]] && BRIGHT_BLUE87="\\033[38;5;87m"
+	GRAYEDOUT="\033[01;30m"
+	RED="\033[01;31m"
+	GREEN="\033[01;32m"
+	YELLOW="\033[01;33m"
+	DARKBLUE="\033[01;34m"
+	DARKGREEN="\033[38;5;22m"
+	PURPLE="\033[01;35m"
+	CYAN="\033[01;36m"
+	WHITEBOLD="\033[01;37m"
 
-  LIGHTGREEN="\033[38;5;83m"
-  LIGHTPINK="\033[1;204m"
-  LIGHTYELLOW="\033[38;5;227m"
-  GREEN_OVER_DARKBLUE="\033[38;5;76m\033[48;5;17m"
-  YELLOW_OVER_DARKBLUE="\033[38;5;220m\033[48;5;20m"
-  DARKBLUE_OVER_DARKBLUE="\033[01;34m\033[48;5;20m"
+	LIGHTGREEN="\033[38;5;83m"
+	LIGHTPINK="\033[1;204m"
+	LIGHTYELLOW="\033[38;5;227m"
+	GREEN_OVER_DARKBLUE="\033[38;5;76m\033[48;5;17m"
+	YELLOW_OVER_DARKBLUE="\033[38;5;220m\033[48;5;20m"
+	DARKBLUE_OVER_DARKBLUE="\033[01;34m\033[48;5;20m"
 
-  RESET="\033[0m"
+	RESET="\033[0m"
 } # end load_colors
 load_colors
 
 [[ -z "${GIT_USER_NAME}" ]] && GIT_USER_NAME=$(command git config user.name 2> /dev/null)
 
 function display_each(){
-  local _one=''
-  local _lines="$(sed 's/\n//g'<<<"${*}")"
-  echo -e "${DARKBLUE}+-+"
-  echo -e "  +"
-  echo -e "  +-- ${GRAYEDOUT}"
-  while read -r _one ; do
-  # for _one in "${*}"; do
-  {
-    [[ -z ${_one} ]] && continue
-    echo -e "${DARKBLUE}  + ${GREEN_OVER_DARKBLUE} ${_one} ${RESET}";
-  }
-  done <<< "${*}"
-  echo -e "${DARKBLUE}  +"
-  echo -e "${DARKBLUE}+-+ ${RESET}"
+	local _one=''
+	local _lines="$(sed 's/\n//g'<<<"${*}")"
+	echo -e "${DARKBLUE}+-+"
+	echo -e "  +"
+	echo -e "  +-- ${GRAYEDOUT}"
+	while read -r _one ; do
+	# for _one in "${*}"; do
+	{
+		[[ -z ${_one} ]] && continue
+		echo -e "${DARKBLUE}  + ${GREEN_OVER_DARKBLUE} ${_one} ${RESET}";
+	}
+	done <<< "${*}"
+	echo -e "${DARKBLUE}  +"
+	echo -e "${DARKBLUE}+-+ ${RESET}"
 }  # end display_each
 
 function display_last_three_commits(){
-  local _branch="${1}"
-  # git log --oneline -n3 --pretty=%B  &> git_log.file
-  wait
-  # local _get_last_commit="$(<git_log.file)"
-  local _get_last_commit="$(git log --oneline -n3 --pretty=%B 2>&1)"
-  echo -e "${PURPLE_BLUE} === ${GRAY241} ${GIT_USER_NAME} ${RESET} ===================== last 3 commits are =============== ${CYAN} ${_branch} ${PURPLE_BLUE} === ${GRAY241} ";
-  display_each "${_get_last_commit}"
-  echo -e "${PURPLE_BLUE} === ${GRAY241} ${GIT_USER_NAME} ${RESET} ======================================================== ${CYAN} ${_branch} ${PURPLE_BLUE} === ${GRAY241} ";
-  # rm git_log.file
+	local _branch="${1}"
+	# git log --oneline -n3 --pretty=%B  &> git_log.file
+	wait
+	# local _get_last_commit="$(<git_log.file)"
+	local _get_last_commit="$(git log --oneline -n3 --pretty=%B 2>&1)"
+	echo -e "${PURPLE_BLUE} === ${GRAY241} ${GIT_USER_NAME} ${RESET} ===================== last 3 commits are =============== ${CYAN} ${_branch} ${PURPLE_BLUE} === ${GRAY241} ";
+	display_each "${_get_last_commit}"
+	echo -e "${PURPLE_BLUE} === ${GRAY241} ${GIT_USER_NAME} ${RESET} ======================================================== ${CYAN} ${_branch} ${PURPLE_BLUE} === ${GRAY241} ";
+	# rm git_log.file
 
 } # end display_last_three_commits
 
 function yes_or_no() {
-  while true; do
-      read -p "$* [y/n]: " yn
-      case $yn in
-          [Yy]*) return 0  ;;
-          [Nn]*) echo "Aborted" ; return  1 ;;
-      esac
-  done
+	while true; do
+			read -p "$* [y/n]: " yn
+			case $yn in
+					[Yy]*) return 0  ;;
+					[Nn]*) echo "Aborted" ; return  1 ;;
+			esac
+	done
 } # end yes no
 
 function edit_or_soft_reset() {
-  while true; do
-      read -p "$* [e/s/n]: " yn
-      case $yn in
-          [e]*) return 2  ;;
-          [s]*) return 0  ;;
-          [Nn]*) echo "Aborted" ; return  1 ;;
-      esac
-  done
+	while true; do
+			read -p "$* [e/s/n]: " yn
+			case $yn in
+					[e]*) return 2  ;;
+					[s]*) return 0  ;;
+					[Nn]*) echo "Aborted" ; return  1 ;;
+			esac
+	done
 } # end yes no
 
 function yes_or_no_ammend() {
-  while true; do
-      read -p "$* [y=yes / n=no / a=amend my own commit]: " yn
-      case $yn in
-          [Aa]*) return 2  ;;
-          [Yy]*) return 0  ;;
-          [Nn]*) echo "Aborted" ; return  1 ;;
-      esac
-  done
+	while true; do
+			read -p "$* [y=yes / n=no / a=amend my own commit]: " yn
+			case $yn in
+					[Aa]*) return 2  ;;
+					[Yy]*) return 0  ;;
+					[Nn]*) echo "Aborted" ; return  1 ;;
+			esac
+	done
 } # end yes_or_no_ammend
 
-function squash_commits(){
-  local -i _err=0
-  local _branch=$(git_current_branch)
-  local _ticket_description=$(cut -d'/' -f2 <<< "${_branch}")
-  _ticket=$(cut -d'_' -f1 <<< "${_ticket_description}")
-  local _description=$(sed 's/-/ /g' <<<$(sed 's/_/ /g'<<<$(cut -d'_' -f2- <<< "${_ticket_description}")))
-  local _count_diff_commits=$(git rev-list --count HEAD ^master)
-  # [ ${_count_diff_commits} -eq 0 ] && echo "Nothing to squash. No diff count in commits found" && return 1
-  # echo -e "${PURPLE_BLUE} === ${GRAY241} ${GIT_USER_NAME} ${PURPLE_BLUE} Squash count: ${CYAN} ${_branch} ${PURPLE_BLUE} === ${GRAY241} ";
-  # git rev-list --count HEAD
-  # echo "minus -:"
-  # git rev-list --count master
-  # echo -e "${PURPLE_BLUE} === ${GRAY241} ${GIT_USER_NAME} ${PURPLE_BLUE} ========== equals to squash: ${CYAN} ${_branch} ${PURPLE_BLUE} === ${GRAY241} ";
-  # git rev-list --count HEAD ^master
-  # echo -e "${PURPLE_BLUE} === ${GRAY241} ${GIT_USER_NAME} ${PURPLE_BLUE} ========== ${GRAY241}  count be Diff without 'Merged' commits  ${CYAN} ${_branch} ${PURPLE_BLUE} === ${GRAY241} ";
-  # git rev-list --no-merges --count HEAD ^master
-  # echo  " "
-  echo -e "${PURPLE_BLUE} === Soft reset ${RED}(${RESET}s${RED}) ${PURPLE_BLUE} edit squash ${RED}(${RESET}e${RED})${PURPLE_BLUE} or abort ${RED}(${RESET}n${RED})${RESET}?${RESET}"
-  edit_or_soft_reset
-  _err=$?
-  if [ ${_err} -eq 2 ] ; then
-  {
-    echo -e "${PURPLE_BLUE} === Waiting for your edit ${RESET}"
-    git rebase -i HEAD~$(git rev-list --count HEAD ^master)
-    _err=$?
-    [ ${_err} -gt 0 ] && return 1
-  }
-  elif [ ${_err} -eq 1 ] ; then
-  {
-    echo -e "${PURPLE_BLUE} === Aborted ${RESET}"
-    return 1
-  }
-  else
-  {
-    git add .
-    echo -e "${PURPLE_BLUE} === ${GRAY241} Now doing ${RED}reset --soft HEAD${PURPLE_BLUE}squash  ${GRAY241}for (${_count_diff_commits}) commits reset soft HEAD against master ${CYAN} ${_branch} ${PURPLE_BLUE} === ${GRAY241} ";
-    git reset --soft HEAD~$(git rev-list --count HEAD ^master)
-    wait
-    display_last_three_commits "${_branch}"
-    local _commit_message="[${_ticket}] ${_description}"
-    display_each "$(git status -sb)"
-    echo -e "${PURPLE_BLUE} === Proceed to commit these ${RED}∆${PURPLE_BLUE}  with this --> ${RED}\"${RESET}${_commit_message}${RED}\"${RESET} ${RESET}?${RESET}"
-    function ammend_commit(){
-      read -p "Enter new commit: " _commit_message
-    } # end amment_commit
-
-    yes_or_no_ammend
-    _err=$?
-    [ ${_err} -eq 2 ] && ammend_commit && echo -e "Proceed to commit these ${RED}∆${PURPLE_BLUE} with this -->  ${RED}\"${RESET}${_commit_message}${RED}\"${RESET} ${RESET}?${RESET}" && yes_or_no && _err=$?
-    [ ${_err} -gt 0 ] && return 1
-    git commit -am "${_commit_message}"
-  }
+function _find_remote_nick(){
+	local -i _err=0
+	local _tab=$(echo -en "\t")
+	local _git_remote=$(git remote -v | head -1 | cut -d"${_tab}"  -f1)
+	_err=$?
+	if [ ${_err} -ne 0 ] || [[ -z ${_git_remote} ]] ; then
+	{
+		echo -e "${RED} ERROR === ${GRAY241} _git_remote git remote -v  failed or empty === cannot contine ${RESET}"
+		echo -e " Could not find remote to branch against${RESET}"
+		exit 1
+	}
   fi
-  display_last_three_commits "${_branch}"
-  echo -e "${PURPLE_BLUE} === You can still do ${RED}undocommit${PURPLE_BLUE}  to before push."
-  echo -e "${PURPLE_BLUE} === After squash now ${BRIGHT_BLUE87}push --force ${PURPLE_BLUE} ${RESET}?${RESET}"
-  yes_or_no
-  [ $? -gt 0 ] && return 1
+  echo "${_git_remote}"
+} # end _find_remote_nick
 
-  echo -e "${PURPLE_BLUE} === ${GRAY241} ${GIT_USER_NAME} ${PURPLE_BLUE} After squash now ${BRIGHT_BLUE87}push --force ${PURPLE_BLUE} proceeds ${CYAN} ${_branch} ${PURPLE_BLUE} === ${GRAY241} ";
-  git push --force
+function _branch_list(){
+	local _branches=$(git branch -ar)
+	echo -n "${_branches}"
+} # end _branch_list
 
+function _find_main_over_master(){
+	local -i _err=0
+	local _found_remote_nick="${1}"
+	local _git_first_attempt=$(git branch -ar | grep "main|master" | head -1)
+	_git_first_attempt=$(grep "${_found_remote_nick}"<<<${_git_first_attempt}) # | grep "main" | head -1)
+	echo -n ${_git_first_attempt}
+} # end _find_main_over_master
+
+function squash_commits(){
+	local -i _err=0
+	local _found_remote_nick=$(_find_remote_nick)
+	_err=$?
+	if [ ${_err} -ne 0 ] || [[ -z ${_found_remote_nick} ]] ; then
+	{
+		echo -e "${RED} ERROR === ${GRAY241} _found_remote_nick git remote -v  failed or empty === cannot contine ${RESET}"
+		echo -e " Could not find remote to branch against${RESET}"
+		exit 1
+	}
+  fi
+ #  local _branch_list=$(_branch_list)
+ #  echo "${_branch_list}"
+ #  exit 0
+	# local _found_main_over_master_branch=$(_find_main_over_master "${_found_remote_nick}")
+	# echo "_found_main_over_master_branch:${_found_main_over_master_branch}"
+	# exit 0
+	local _found_main_over_master_branch="main"
+	local _branch=$(git_current_branch)
+	local _ticket_description=$(cut -d'/' -f2 <<< "${_branch}")
+	_ticket=$(cut -d'_' -f1 <<< "${_ticket_description}")
+	local _description=$(sed 's/-/ /g' <<<$(sed 's/_/ /g'<<<$(cut -d'_' -f2- <<< "${_ticket_description}")))
+	local _count_diff_commits=$(git rev-list --count HEAD ^${_found_main_over_master_branch})
+	# [ ${_count_diff_commits} -eq 0 ] && echo "Nothing to squash. No diff count in commits found" && return 1
+	# echo -e "${PURPLE_BLUE} === ${GRAY241} ${GIT_USER_NAME} ${PURPLE_BLUE} Squash count: ${CYAN} ${_branch} ${PURPLE_BLUE} === ${GRAY241} ";
+	# git rev-list --count HEAD
+	# echo "minus -:"
+	# git rev-list --count ${_found_main_over_master_branch}
+	# echo -e "${PURPLE_BLUE} === ${GRAY241} ${GIT_USER_NAME} ${PURPLE_BLUE} ========== equals to squash: ${CYAN} ${_branch} ${PURPLE_BLUE} === ${GRAY241} ";
+	# git rev-list --count HEAD ^${_found_main_over_master_branch}
+	# echo -e "${PURPLE_BLUE} === ${GRAY241} ${GIT_USER_NAME} ${PURPLE_BLUE} ========== ${GRAY241}  count be Diff without 'Merged' commits  ${CYAN} ${_branch} ${PURPLE_BLUE} === ${GRAY241} ";
+	# git rev-list --no-merges --count HEAD ^${_found_main_over_master_branch}
+	# echo  " "
+	echo -e "${PURPLE_BLUE} === Soft reset ${RED}(${RESET}s${RED}) ${PURPLE_BLUE} edit squash ${RED}(${RESET}e${RED})${PURPLE_BLUE} or abort ${RED}(${RESET}n${RED})${RESET}?${RESET}"
+	edit_or_soft_reset
+	_err=$?
+	if [ ${_err} -eq 2 ] ; then
+	{
+		echo -e "${PURPLE_BLUE} === Waiting for your edit ${RESET}"
+		git rebase -i HEAD~$(git rev-list --count HEAD ^${_found_main_over_master_branch})
+		_err=$?
+		[ ${_err} -gt 0 ] && return 1
+	}
+	elif [ ${_err} -eq 1 ] ; then
+	{
+		echo -e "${PURPLE_BLUE} === ${RED} Aborted${PURPLE_BLUE} === ${RESET}"
+		return 1
+	}
+	else
+	{
+		git add .
+		echo -e "${PURPLE_BLUE} === ${GRAY241} Now doing ${RED}reset --soft HEAD${PURPLE_BLUE}squash  ${GRAY241}for (${_count_diff_commits}) commits reset soft HEAD against ${_found_main_over_master_branch} ${CYAN} ${_branch} ${PURPLE_BLUE} === ${GRAY241} ";
+		git reset --soft HEAD~$(git rev-list --count HEAD ^${_found_main_over_master_branch})
+		wait
+		display_last_three_commits "${_branch}"
+		local _commit_message="[${_ticket}] ${_description}"
+		display_each "$(git status -sb)"
+		echo -e "${PURPLE_BLUE} === Proceed to commit these ${RED}∆${PURPLE_BLUE}  with this --> ${RED}\"${RESET}${_commit_message}${RED}\"${RESET} ${RESET}?${RESET}"
+		function ammend_commit(){
+			read -p "Enter new commit: " _commit_message
+		} # end amment_commit
+
+		yes_or_no_ammend
+		_err=$?
+		[ ${_err} -eq 2 ] && ammend_commit && echo -e "Proceed to commit these ${RED}∆${PURPLE_BLUE} with this -->  ${RED}\"${RESET}${_commit_message}${RED}\"${RESET} ${RESET}?${RESET}" && yes_or_no && _err=$?
+		[ ${_err} -gt 0 ] && return 1
+		git commit -am "${_commit_message}"
+	}
+	fi
+	display_last_three_commits "${_branch}"
+	echo -e "${PURPLE_BLUE} === You can still do ${RED}undocommit${PURPLE_BLUE}  to before push."
+	echo -e "${PURPLE_BLUE} === After squash now ${BRIGHT_BLUE87}push --force ${PURPLE_BLUE} ${RESET}?${RESET}"
+	yes_or_no
+	_err=$?
+	[ $_err -gt 0 ] && return 1
+
+	echo -e "${PURPLE_BLUE} === ${GRAY241} ${GIT_USER_NAME} ${PURPLE_BLUE} After squash now ${BRIGHT_BLUE87}push --force ${PURPLE_BLUE} proceeds ${CYAN} ${_branch} ${PURPLE_BLUE} === ${GRAY241} ";
+	# Change remote target if there is a config line about it
+	local _remote="${_found_remote_nick}"  # usually origin
+ 	_remote=$(git config --list | grep "branch.${_branch}" | grep 'remote' | cut -d= -f2)
+	_err=$?
+	# Expected output
+	# branch.feature/logger.remote=contributor
+	# branch.feature/logger.merge=refs/heads/feature/logger
+	if [ $_err -gt 0 ] ; then
+	{
+		echo -e "${PURPLE_BLUE} === ${RED} git remote not found ${PURPLE_BLUE} === ${RESET}"
+		# Change remote target if there is a config line about it
+		_remote="${_found_remote_nick}"  # usually origin
+		echo "git push --force ${_remote} ${_branch} "
+		git push --force "${_remote}" "${_branch}"
+	}
+	else
+	{
+		echo "git push --force ${_branch} "
+		git push --force "${_branch}"
+	}
+	fi
 } # end squash_commits
 
+
+if [ ! -e .git ] ; then
+{
+	echo -e "${RED} ERROR === ${GRAY241} This is not git root or is not a git project ${RESET}"
+	echo -e " Move to where .git folder is located ${RESET}"
+	exit 1
+}
+fi
 squash_commits
+
