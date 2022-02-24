@@ -1267,7 +1267,7 @@ stage_and_commit_several_files() {
                 git add "${ONE_FILENAME}"
             }
             fi
-(( DEBUG_VERB_READING_LOGIC )) && echo $( continue_y_n )
+
             if  ( changes_got_staged_for_this_filename "${ONE_FILENAME}" ) ; then
             {
                 (( DEBUG_VERB_READING_LOGIC )) && echo "CHANGES GOT STAGED FOR :${ONE_FILENAME}: ... so now running commit"
@@ -1315,6 +1315,72 @@ ${this_perform_commit}"
     }
     fi
 } #end stage_and_commit_several_files
+
+
+do_unstage_here(){
+  local UNSTAGE_THIS_FILE
+  local EXCEPTION_LIST
+  local try_FILENAME="${*}" # Grab every thing as one filename to include spaces
+  if [[ "$(uname)" == "Darwin" ]] || [[ "$(expr substr $(uname -s) 1 5)" == "Linux" ]] ; then
+  {
+    # Do something under Mac OS X platform
+    EXCEPTION_LIST="$(<commit_exception.list)"
+    while read -r UNSTAGE_THIS_FILE; do
+    {
+      # if not empty
+      [ -z ${UNSTAGE_THIS_FILE} ] && continue
+      # if file exists in this repo
+      [[ ! -f "${UNSTAGE_THIS_FILE}" ]] && continue
+      # Unstage file REF: http://stackoverflow.com/questions/19730565/how-to-remove-files-from-git-staging-area
+      #echo -e "\\033[38;5;123m Unstage file: ${UNSTAGE_THIS_FILE}"
+      if [[ "${try_FILENAME}" == "${UNSTAGE_THIS_FILE}" ]] ; then
+      {
+        echo
+        echo -e "${PURPLE_BLUE} === ${GRAY241} ${GIT_USER_NAME} ${PURPLE_BLUE} skipping ${RED}${try_FILENAME}${PURPLE_BLUE} from ${CYAN} commit into ${BRANCHNAME} ${PURPLE_BLUE} === ${GRAY241} ";
+        echo
+        git reset HEAD -- "${UNSTAGE_THIS_FILE}" > /dev/null 2>&1
+        return 1
+      }
+      fi
+    }
+    done <<< "${EXCEPTION_LIST}"
+  }
+  elif [[ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]] ; then
+  {
+    # Do something under Windows NT platform
+    echo "PENDING WINDOWS IMPLEMENTATION is_in_commit_exception_list()";
+    # nothing here
+  }
+  fi
+  return 0
+} # end is_in_commit_exception_list
+
+is_in_commit_exception_list(){
+  if [ -f commit_exception.list ] && command -v unstage_exception_list >/dev/null 2>&1; then
+  {
+    echo
+    echo -e "${PURPLE_BLUE} === ${GRAY241} ${GIT_USER_NAME} ${PURPLE_BLUE} commit_exception.list found ${CYAN} ${BRANCHNAME} ${PURPLE_BLUE} === ${GRAY241} ";
+    echo
+    if [[ "$(uname)" == "Darwin" ]] ; then
+    {
+      # Do something under Mac OS X platform
+      do_unstage_here "${*}" ;
+    }
+    elif [[ "$(expr substr $(uname -s) 1 5)" == "Linux" ]] ; then
+    {
+      # Do something under GNU/Linux platform
+      do_unstage_here "${*}" ;
+    }
+    elif [[ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]] ; then
+    {
+      # Do something under Windows NT platform
+      do_unstage_here "${*}" ;
+      # nothing here
+    }
+    fi
+  }
+  fi
+} # end is_in_commit_exception_list
 
 perform_git_add(){
     #   Sample use:
@@ -1388,7 +1454,6 @@ ${try_FILENAME}"
     }
     done
 
-
     if [[ "${ADDFILE}" == "SI"  ]] ; then                    # commit one file, up to four files or 4 directories
     {
         (( DEBUG_VERB_READING_LOGIC )) && echo "addfile is si "
@@ -1428,7 +1493,9 @@ ${try_FILENAME}"
             {
                 (( ! DEBUG_VERB_READING_LOGIC )) &&    commit_status_continue
                 display_commit_results "${COMMIT_RESULTS}"
-            } else {
+            }
+            else
+            {
                 display_error_during_commit "${COMMIT_RESULTS}"
             }
             fi
@@ -1436,12 +1503,31 @@ ${try_FILENAME}"
             (( ! DEBUG_VERB_READING_LOGIC )) && commit_status_continue
         }
         fi
-    } else {                                                                                # commit all the file changes
+    }
+    else
+    {                                                                                # commit all the file changes
         (( DEBUG_VERB_READING_LOGIC )) && echo "addfile is no so I will add all the files "
         (( DEBUG_VERB_READING_LOGIC )) && echo "git add -p   ...# THIS IS FOR ALL FILES"
         git add -p
         wait
-        git add .
+        # git add .
+        local _unstagges=$(get_list_of_deleted_files_not_commited "${FILENAME}" | uniq)
+        local _unstagge
+        while read -r _unstagge ; do
+        {
+          [ -z ${_unstagge} ] && continue
+          # if file exists in this repo
+          [[ ! -f "${_unstagge}" ]] && continue
+          (( DEBUG_VERB_READING_LOGIC )) && echo "checking if is_in_commit_exception_list() \"${_unstagge}\" "
+          if is_in_commit_exception_list "${_unstagge}" ; then
+          {
+            echo -e "${PURPLE_BLUE} === ${GRAY241} ${GIT_USER_NAME} ${PURPLE_BLUE} file ${RED}${_unstagge}${CYAN} was unstagged ${BRANCHNAME} ${PURPLE_BLUE} === ${GRAY241} ";
+          }
+          fi
+        }
+        done <<< "${_unstagges}"
+        (( DEBUG_VERB_READING_LOGIC )) && git status -sb
+        (( DEBUG_VERB_READING_LOGIC )) && continue_y_n
         COMMIT_RESULTS=$(perform_commit """${ACTION} ${OPTIONS}""")
         local err_buff=$?
         local ERROR_DID_NOT_HAPPENED=""
@@ -1451,7 +1537,9 @@ ${try_FILENAME}"
         {
             (( ! DEBUG_VERB_READING_LOGIC )) && commit_status_continue
             display_commit_results "${COMMIT_RESULTS}"
-        } else {
+        }
+        else
+        {
             display_error_during_commit "${COMMIT_RESULTS}"
         }
         fi
@@ -1504,21 +1592,62 @@ check_bash_version_required() {
 } # end check_bash_version_required
 check_bash_version_required
 
-#
-# C H E C K   H O W   C O M P U T E R   H A N D L E S   E R R O R S   --Start
-#
-test_positives(){
-  KIND=""
-  ls werwerwerwerwerwerwerwerwerwerwerr >/dev/null 2>&1;
-  if (( $? == 0 )) ;  then  # Intel processor
-    KIND="INTEL"
-  fi
-  if [ $? == 0 ]; then   # Mac Intel processor
-    KIND="${KIND}MAC"
-  fi
-  echo "${KIND}"
-} # end test_positives
-PROCESSOR_ERROR=$(test_positives)
+        #
+        # C H E C K   H O W   C O M P U T E R   H A N D L E S   E R R O R S   --Start repeated in struct_testing
+        #
+        function test_positives() {
+            # Sample use
+            #
+            #
+            #    local message_response=$(ls asdasdfas1234  2>&1 )  # Perform an action with error ,capture all output, error will return 1 to $?
+            #    local err_buff=$?
+            #    local ERROR_HAPPENED=""
+            #    [[ "${PROCESSOR_ERROR}" == *"MAC"* ]] && [ $err_buff != 0 ] && ERROR_HAPPENED="1"
+            #    [[ "${PROCESSOR_ERROR}" == *"INTEL"* ]] && (( $err_buff != 0 )) && ERROR_HAPPENED="1"
+            #    if [ "${ERROR_HAPPENED}" ] || \
+            #        [[ "${message_response}" == *"error"* ]] || \
+            #        [[ "${message_response}" == *"ERROR"* ]] || \
+            #        [[ "${message_response}" == *"denied"* ]] \
+            #    ; then
+            #    {
+            #        failed "There was an error- do something- show something ${message_response}"
+            #    }
+            #    fi
+            #
+            #    # Alternative:
+            #    local err_buff=$?
+            #    local ERROR_HAPPENED=""
+            #    (  ( [[ "${PROCESSOR_ERROR}" == *"MAC"* ]] && [ $err_buff != 0 ]  )  ||  (  [[ "${PROCESSOR_ERROR}" == *"INTEL"* ]] && (( $err_buff != 0 ))  )   )  && ERROR_HAPPENED="1"
+            #    if [ "${ERROR_HAPPENED}" ] || \
+            #        [[ "${message_response}" == *"error"* ]] || \
+            #        [[ "${message_response}" == *"ERROR"* ]] || \
+            #        [[ "${message_response}" == *"denied"* ]] \
+            #    ; then
+            #    {
+            #        failed "There was an error- do something- show something ${message_response}"
+            #    }
+            #    fi
+
+            KIND=""
+            if ls werwerwerwerwerwerwerwerwerwerwerr >/dev/null 2>&1; then
+              if (( $? == 0 )) ;  then  # Intel processor
+                KIND="INTEL"
+              fi
+              if [ $? == 0 ]; then   # Mac Intel processor
+                KIND="${KIND}MAC"
+              fi
+            else
+              if (( $? == 0 )) ;  then  # Intel processor
+                KIND="INTEL"
+              fi
+              if [ $? == 0 ]; then   # Mac Intel processor
+                KIND="${KIND}MAC"
+              fi
+            fi
+            # echo "clear_error_output" >/dev/null 2>&1;
+            echo "${KIND}"
+        }
+        PROCESSOR_ERROR=$(test_positives)
 # DEBUG MACPOSITIVE MACPOSITIVE echo "${MACPOSITIVE}"
 # DEBUG MACPOSITIVE exit 1
 #
@@ -1533,5 +1662,6 @@ PROCESSOR_ERROR=$(test_positives)
 # Globals
 COMMIT_RESULTS=""
 DEBUG_VERB_READING_LOGIC=0
+(( DEBUG_VERB_READING_LOGIC )) && echo "DEBUG_VERB_READING_LOGIC=1: is turned on \"${0}\""
 perform_git_add $@
 

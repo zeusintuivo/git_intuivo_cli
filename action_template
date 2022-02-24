@@ -16,37 +16,55 @@ sshswitchkey_and_commit_here() {
 
 #KEY?
     if [[ "${PWD}" == *"clis"* ]] ; then   # forcing my own config here
+    {
       if [[ "${GIT_USER_NAME}" != *"zeusintuivo"* ]] ; then
         sshswitchkey zeus ;
         GIT_USER_NAME=$(command git config user.name 2> /dev/null)
       fi
       put "${ACTION}" "$*" ;
+    }
     else
+    {
       LOAD_TEMP_KEYS="# Empty script"
       if [ -f .temp_keys ] ; then
+      {
         LOAD_TEMP_KEYS=$(<.temp_keys)
         eval "${LOAD_TEMP_KEYS}"
         if [[ ! -z "${SSH_KEY}" ]] && [[ "${GITUSER}" != "${GIT_USER_NAME}" ]] ; then
+        {
           sshswitchkey "${SSH_KEY}"
           GIT_USER_NAME=$(command git config user.name 2> /dev/null)
+        }
         fi
         # If the ..temp file provides for  JOURNAL_PUT_COMMIT_METHOD then use it otherwise default to commit action
         #Extra commit
         if [[ ! -z "${JOURNAL_PUT_COMMIT_METHOD}" ]]; then
+        {
           if [[ "${JOURNAL_PUT_COMMIT_METHOD}" == "put" || "${JOURNAL_PUT_COMMIT_METHOD}" == "commit" ]] ; then
+          {
             "${JOURNAL_PUT_COMMIT_METHOD}" "$*" ;
+          }
           else
-            echo "  - It appear file .temp_keys is corrupted. I am expecting …put^ or …commit^"
+          {
+            echo "  - It appears that file .temp_keys is corrupted. I am expecting …put^ or …commit^"
             echo "    as values. I have received :"${JOURNAL_PUT_COMMIT_METHOD}":  - "
             echo "    Attemping execution anyways "
             "${JOURNAL_PUT_COMMIT_METHOD}" "$*" ;
+          }
           fi
+        }
         else
+        {
           commit "${ACTION}" "$*" ;
+        }
         fi
+      }
       else
+      {
         commit "${ACTION}" "$*" ;   # this is the default action if the file .temp_keys does not exists
+      }
       fi
+    }
     fi
 
 

@@ -12,32 +12,37 @@
 # check operation systems
 (
   if [[ "$(uname)" == "Darwin" ]] || [[ "$(expr substr $(uname -s) 1 5)" == "Linux" ]] ; then
+  {
     # Do something under Mac OS X platform
 
     # if file exists in this repo
     if [ -f "commit_exception.list" ] ; then
-      EXCEPTION_LIST=$(cat commit_exception.list)
+    {
+      EXCEPTION_LIST="$(<commit_exception.list)"
+    }
     else
+    {
       EXCEPTION_LIST=""
+    }
     fi
     while read -r UNSTAGE_THIS_FILE; do
+    {
       # if not empty
-      if [ ! -z "${UNSTAGE_THIS_FILE}" ] ; then
-
-        # if file exists in this repo
-        if [ -f "${UNSTAGE_THIS_FILE}" ] ; then
-          # Unstage file REF: http://stackoverflow.com/questions/19730565/how-to-remove-files-from-git-staging-area
-          #echo -e "\\033[38;5;123m Unstage file: ${UNSTAGE_THIS_FILE}"
-          git reset HEAD -- "${UNSTAGE_THIS_FILE}" > /dev/null 2>&1
-        fi
-      fi
+      [ -z ${UNSTAGE_THIS_FILE} ] && continue
+      # if file exists in this repo
+      [[ ! -f "${UNSTAGE_THIS_FILE}" ]] && continue
+      # Unstage file REF: http://stackoverflow.com/questions/19730565/how-to-remove-files-from-git-staging-area
+      #echo -e "\\033[38;5;123m Unstage file: ${UNSTAGE_THIS_FILE}"
+      git reset HEAD -- "${UNSTAGE_THIS_FILE}" > /dev/null 2>&1
+    }
     done <<< "${EXCEPTION_LIST}"
-
-
+  }
   elif [[ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]] ; then
+  {
     # Do something under Windows NT platform
     echo "PENDING WINDOWS IMPLEMENTATION";
     # nothing here
+  }
   fi
 )
 
