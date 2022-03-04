@@ -1179,7 +1179,7 @@ get_stagging_commands_and_filenames() {
     for ONE_FILENAME in "${filenames}"; do
     {
       # if not empty
-      if [ -n "${ONE_FILENAME}" ] ; then
+      if [[ -n "${ONE_FILENAME}" ]] ; then
       {
             if  ( file_exists_remote "${CURBRANCH}" "${ONE_FILENAME}" ) ; then
             {
@@ -1508,7 +1508,7 @@ ${try_FILENAME}"
     {                                                                                # commit all the file changes
         (( DEBUG_VERB_READING_LOGIC )) && echo "addfile is no so I will add all the files "
         (( DEBUG_VERB_READING_LOGIC )) && echo "git add -p   ...# THIS IS FOR ALL FILES"
-        git add -p
+        git add -p # Hack to just add all files
         wait
         # git add .
         local _unstagges=$(get_list_of_deleted_files_not_commited "${FILENAME}" | uniq)
