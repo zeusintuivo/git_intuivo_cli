@@ -24,15 +24,15 @@ SEEKING="<<<<<< HEAD";
 
 if [[ "$(uname)" == "Darwin" ]] ; then
   # Do something under Mac OS X platform
-  nur "${SEEKING}" "$1";
+  nur "${SEEKING}" "$1" | ohne "vendor\/squizlabs\/php_codesniffer\/src\/Standards";
 
 elif [[ "$(expr substr $(uname -s) 1 5)" == "Linux" ]] ; then
   # Do something under GNU/Linux platform
-  nur "${SEEKING}" "$1";
+  nur "${SEEKING}" "$1" | ohne "vendor\/squizlabs\/php_codesniffer\/src\/Standards";
 
 elif [[ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]] ; then
   # Do something under Windows NT platform
-  nur "${SEEKING}" "$1";
+  nur "${SEEKING}" "$1" | ohne "vendor\/squizlabs\/php_codesniffer\/src\/Standards";
   # nothing here
 fi
 
