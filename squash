@@ -107,7 +107,7 @@ function edit_or_soft_reset() {
 					[Nn]*) echo "Aborted" ; return  1 ;;
 			esac
 	done
-} # end yes no
+} # end edit_or_soft_reset
 
 function yes_or_no_ammend() {
 	while true; do
