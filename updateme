@@ -28,7 +28,7 @@ push
 
 #BRANCH FROM ..master or develop or etc
 echo -e ""
-echo -e "\033[38;5;27m === Switch Branch to $TARGETBASEBRANCH  === \033[38;5;214m"
+echo -e "\033[38;5;30m === Switch Branch to $TARGETBASEBRANCH \033[38;5;30m === \033[38;5;214m"
 echo -e ""
 branch "${TARGETBASEBRANCH}"
 echo -e ""
@@ -38,7 +38,7 @@ pull
 
 #branch
 echo -e ""
-echo -e "\033[38;5;27m === Branch back to ${CURBRANCH}  === \033[38;5;214m"
+echo -e "\033[38;5;29m === Branch back to ${CURBRANCH} \033[38;5;29m === \033[38;5;214m"
 echo -e ""
 branch "${CURBRANCH}"
 echo ""
@@ -52,8 +52,28 @@ echo -e ""
 
 if [[ "${MERGE_RESULTS}" == *"conflicts"* ]]  ; then
 {
+  MERGECONFLICTED="$(echo -en "${MERGE_RESULTS}" |  grep "CONFLICT" | tail -1 | cut -d' ' -f2- | sed 's/ /\n/g' | tail -1 )"
+  MERGECONFLICTS="$(echo -en "${MERGE_RESULTS}" |  grep "CONFLICT" | tail -1 | cut -d' ' -f2- | sed 's/ /\n/g' )"
   echo -e "${red}${MERGE_RESULTS}${yellow214}"
-  nur "<<<<<"
+  conflicts
+  echo -e ""
+  echo -e "\033[38;5;27m ===  fix ${RED}Conflicts \033[38;5;27m from ${CYAN}$TARGETBASEBRANCH \033[38;5;27m into ${CURBRANCH}  === \033[38;5;214m"
+  echo -e "\033[38;5;26m === then or add conflicted file  \033[38;5;26m === \033[38;5;214m"
+  echo -e "\033[38;5;25m === sample ${RED} git add ${MERGECONFLICTED} \033[38;5;25m === \033[38;5;214m"
+  while read -r CONFLICTEDFILE ;
+  do
+  {
+    [[ -z "${CONFLICTEDFILE}" ]] && continue;
+    echo -e "\033[38;5;25m === sample ${RED} git add ${CONFLICTEDFILE} \033[38;5;25m === \033[38;5;214m"
+  }
+  done <<< "${MERGECONFLICTS}"
+  echo -e ""
+  echo -e "\033[38;5;24m === then  continue to merge \033[38;5;24m === \033[38;5;214m"
+  echo -e "\033[38;5;23m === sample ${RED} git merge --continue \033[38;5;23m === \033[38;5;214m"
+  echo -e "\033[38;5;22m === then push  \033[38;5;22m === \033[38;5;214m"
+  echo -e "\033[38;5;21m === sample ${RED} git push \033[38;5;21m === \033[38;5;214m"
+  echo -e "\033[38;5;20m === then ${YELLOW_OVER_DARKBLUE} repeat until merge is done \033[38;5;20m === \033[38;5;214m"
+  exit 1
 }
 else
 {

@@ -13,7 +13,7 @@
 # read arguments from stdin, command line
 if [[ -z "${1}" ]]  ; then
 {
-	COMMIT_MESSAGE="Updating branch ${CURBRANCH} from ${TARGETBASEBRANCH} branch. Adding and committing beforehand."
+	COMMIT_MESSAGE="Updating branch ${CURBRANCH} from ${TARGETBASEBRANCH} branch. Adding and commiting beforehand."
 }
 else
 {
@@ -53,12 +53,20 @@ echo -e ""
 if [[ "${MERGE_RESULTS}" == *"conflicts"* ]]  ; then
 {
   MERGECONFLICTED="$(echo -en "${MERGE_RESULTS}" |  grep "CONFLICT" | tail -1 | cut -d' ' -f2- | sed 's/ /\n/g' | tail -1 )"
+  MERGECONFLICTS="$(echo -en "${MERGE_RESULTS}" |  grep "CONFLICT" | tail -1 | cut -d' ' -f2- | sed 's/ /\n/g' )"
   echo -e "${red}${MERGE_RESULTS}${yellow214}"
-  nur "<<<<<"
+  conflicts
   echo -e ""
   echo -e "\033[38;5;27m ===  fix ${RED}Conflicts \033[38;5;27m from ${CYAN}$TARGETBASEBRANCH \033[38;5;27m into ${CURBRANCH}  === \033[38;5;214m"
   echo -e "\033[38;5;26m === then or add conflicted file  \033[38;5;26m === \033[38;5;214m"
   echo -e "\033[38;5;25m === sample ${RED} git add ${MERGECONFLICTED} \033[38;5;25m === \033[38;5;214m"
+  while read -r CONFLICTEDFILE ;
+  do
+  {
+    [[ -z "${CONFLICTEDFILE}" ]] && continue;
+    echo -e "\033[38;5;25m === sample ${RED} git add ${CONFLICTEDFILE} \033[38;5;25m === \033[38;5;214m"
+  }
+  done <<< "${MERGECONFLICTS}"
   echo -e ""
   echo -e "\033[38;5;24m === then  continue to rebase \033[38;5;24m === \033[38;5;214m"
   echo -e "\033[38;5;23m === sample ${RED} git rebase --continue \033[38;5;23m === \033[38;5;214m"
