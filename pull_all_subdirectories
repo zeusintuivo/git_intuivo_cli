@@ -12,23 +12,17 @@
 
   while read -r one_item; do
   {
-    if [ ! -z "${one_item}" ] ; then  # if not empty
+    [ -z "${one_item}" ] && continue  # if z empty skip
+    while read -r one_action; do
     {
-      while read -r one_action; do
-      {
-        if [ ! -z "${one_action}" ] ; then  # if not empty
-        {
-          action="${one_action/\{\#\}/$one_item}"  # replace value inside string substitution expresion bash
-          eval ${action}
-        }
-        fi
-      }
-      done <<< "${local_actions}"
+      [ -z "${one_action}" ] && continue  # if z empty skip
+      action="${one_action/\{\#\}/$one_item}"  # replace value inside string substitution expresion bash
+      eval ${action}
     }
-    fi
+    done <<< "${local_actions}"
   }
   done <<< "${local_items}"
-}
+} # end .each
 
 GET_ALL_SUBDIRS=$(find * -maxdepth 0 -type d | egrep -v "\.git")
 
