@@ -1,0 +1,3 @@
+#!/usr/bin/env zsh
+git status -sb | cut -c4- | ohne "\.\.\."
+
