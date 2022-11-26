@@ -2,7 +2,8 @@
 
 .dirs() {
     find * -maxdepth 0 -type d   # mac and linux tested
-}
+} # end dirs
+
 .pullsubs() {
   # Perform all actions in
   #        LIST1
@@ -15,19 +16,16 @@
   local one_item  action _cwd
   while read -r one_item; do
   {
-    if [[ -n "${one_item}" ]] ; then  # if not empty
-    {
-      _cwd="${_curdir}/${one_item}"
-      cd "${_cwd}"
-      echo "${_cwd}"
-      action="${ACTIONS/\{\#\}/$one_item}"  # replace value inside string substitution expresion bash
-      eval "${action}"
-    }
-    fi
+    [[ -z "${one_item}" ]] && continue  # if zempty skip
+    _cwd="${_curdir}/${one_item}"
+    cd "${_cwd}"
+    echo "${_cwd}"
+    action="${ACTIONS/\{\#\}/$one_item}"  # replace value inside string substitution expresion bash
+    eval "${action}"
   }
   done <<< "${local_items}"
   return 0
-}
+} # end .pullsubs
 
 
 CURDIR="${PWD}"
@@ -43,4 +41,5 @@ else
 fi
 "
 .pullsubs  "${CURDIR}" "${ACTIONS}"
+
 

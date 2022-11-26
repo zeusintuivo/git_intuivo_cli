@@ -12,30 +12,28 @@
 
   while read -r one_item; do                                                  # Get longest file name
   {
-    if [ ! -z "${one_item}" ] ; then  # if not empty
+    [ -z "${one_item}" ] && continue  # if zempty skip
+    while read -r one_action; do                                                  # Get longest file name
     {
-      while read -r one_action; do                                                  # Get longest file name
-      {
-        if [ ! -z "${one_action}" ] ; then  # if not empty
-        {
-          #echo -e "${one_item} ${one_action}"
-          #echo -e "${one_action}"
-          action="${one_action/\{\}/$one_item}"  # replace value inside string substitution expresion bash
-          echo -e "${action}"
-          eval ${action}
-          #
-        }
-        fi
-      }
-      done <<< "${local_actions}"
+      [ -z "${one_action}" ] && continue  # if zempty skip
+      # echo -e "${one_item} ${one_action}"
+      # echo -e "${one_action}"
+      action="${one_action/\{\}/$one_item}"  # replace value inside string substitution expresion bash
+      echo -e "${action}"
+      eval ${action}
+      #
     }
-    fi
+    done <<< "${local_actions}"
   }
   done <<< "${local_items}"
-}
+} # end .each
+
+echo "Fetch all current new branches"
+git fetch
 
 ALL_LOCAL_BRANCHES_BRANCHES=$(git branch -l --no-color | sed '1d' | sed 's/[*]//g' | sed 's/\ //g' )
 ACTIONS="git checkout {}
 pull
 "
 .each  "${ACTIONS}" "${ALL_LOCAL_BRANCHES_BRANCHES}"
+

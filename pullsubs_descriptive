@@ -2,7 +2,7 @@
 
 ._dirs() {
     find * -maxdepth 0 -type d   # mac and linux tested
-}
+} # end ._dirs
 
 ._replace_all(){
   local found
@@ -15,7 +15,8 @@
     [ $? -eq 1 ] &&  break
   done
   echo "${one_action}"
-}
+} # end ._replace_all
+
 # DEBUG=1
 # REMOVECACHE=1
 .pullsubdirs() {
@@ -50,7 +51,7 @@
   # local subdir_out=""
   while read -r one_item; do
   {
-    [[ -z "${one_item}" ]] && continue  # if not empty
+    [[ -z "${one_item}" ]] && continue  # if zempty skip
     action="$(._replace_all "${one_item}" "${local_actions}")"
     # echo "${action}"
     eval "${action}"
@@ -72,7 +73,7 @@
     # echo "${subdir_out}"
   }
   done <<< "${local_items}"
-}
+} # end .pullsubdirs
 
 
 CURDIR="${PWD}"
