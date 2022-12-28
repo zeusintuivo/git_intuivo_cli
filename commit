@@ -389,7 +389,7 @@ commit_status_continue() {
         {
             echo ""
             echo -e "${red}ERROR! ${yellow214}Not even this branch :${red}${BRANCH_MERGE_AGAINST}${yellow214}: exists ${yellow214}
-            then I don't know what to then. Exiting ${reset}"
+            then I don't know what to do then. Exiting ${reset}"
             echo ""
             git status -sb
             exit 69; # CONTROLLED ERROR EXIT - NOT FOUND master $BRANCH_MERGE_AGAINST
