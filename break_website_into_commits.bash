@@ -38,6 +38,7 @@ load_struct_testing_wget(){
     ( ( ! command -v passed >/dev/null 2>&1; ) && echo -e "\n \n  ERROR! Loading struct_testing \n \n " && exit 69; )
 } # end load_struct_testing_wget
 load_struct_testing_wget
+
 load_journal_functions_wget(){
     local provider="$HOME/_/clis/journal_intuivo_cli/journal_get_sed_functions"
     # shellcheck disable=SC1090
@@ -46,6 +47,7 @@ load_journal_functions_wget(){
     ( ( ! command -v passed >/dev/null 2>&1; ) && echo -e "\n \n  ERROR! Loading journal_functions \n \n " && exit 69; )
 } # end load_journal_functions_wget
 load_journal_functions_wget
+Checking "Check vars USER_HOME SUDO_USER THISSCRIPT THISFOLDER THISCRIPTCOMPLETEPATH"
 enforce_variable_with_value USER_HOME "${USER_HOME}"
 enforce_variable_with_value SUDO_USER "${SUDO_USER}"
 
@@ -201,36 +203,46 @@ function _breakable_copy_directory(){
 	# DEBUG=1
 	local _cwd="${1}"
   (( DEBUG )) && echo "1:${1}" # param order    varname       varvalue               sample_value
-  enforce_parameter_with_value      1        _cwd             "${_cwd}"              "/home/user/_/work/"
+  Message _breakable_copy_directory $LINENO
+	enforce_parameter_with_value      1        _cwd             "${_cwd}"              "/home/user/_/work/"
 	local _commit_number="${2}"
   (( DEBUG )) && echo "2:${2}" # param order    varname       varvalue               sample_value
+  Message _breakable_copy_directory $LINENO
   enforce_parameter_with_value      2        _commit_number   "${_commit_number}"    "291"
 	local _commit="${3}"
   (( DEBUG )) && echo "3:${3}" # param order    varname       varvalue               sample_value
+  Message _breakable_copy_directory $LINENO
   enforce_parameter_with_value      3        _commit          "${_commit}"           "304b6dcc9606fffdf79e959d72b5a3b3a1bf4e4"
 	local _new_folder_name="${4}"
   (( DEBUG )) && echo "4:${4}" # param order    varname       varvalue               sample_value
+  Message _breakable_copy_directory $LINENO
   enforce_parameter_with_value      4        _new_folder_name "${_new_folder_name}"  "1234-304b6dcc-fixed-tool-20200405TZ1000"
 	local _from="${5}"
   (( DEBUG )) && echo "5:${5}" # param order    varname       varvalue               sample_value
+  Message _breakable_copy_directory $LINENO
   enforce_parameter_with_value      5        _from            "${_from}"             "/home/pedro/_/workwitgit/"
 	local _to="${6}"
   (( DEBUG )) && echo "6:${6}" # param order    varname       varvalue               sample_value
+  Message _breakable_copy_directory $LINENO
   enforce_parameter_with_value      6        _to              "${_to}"               "/home/mario/_/breakage/"
 	local _packager="${7}"
   (( DEBUG )) && echo "7:${7}" # param order    varname       varvalue               sample_value
+  Message _breakable_copy_directory $LINENO
   enforce_parameter_with_value      7        _packager        "${_packager}"         "yarn"
   #
 	local _target="${_to}/${_new_folder_name}"
   (( DEBUG )) && echo "_target:${_target}"
+  Message _breakable_copy_directory $LINENO
   enforce_variable_with_value _target "${_target}"
 	local _date="$(tail -1<<<"$(sed 's/-/\n/g'<<<"${_new_folder_name}")")"
   (( DEBUG )) && echo "_date:${_date}"
+  Message _breakable_copy_directory $LINENO
   enforce_variable_with_value _date "${_date}"
   Checking "_date :${_date}:"
 	local -i _err=0
 	local _log_path="${_to}/breakage.log"
   (( DEBUG )) && echo "_log_path:${_log_path}"
+  Message _breakable_copy_directory $LINENO
   enforce_variable_with_value _log_path "${_log_path}"
 	cd "${_from}"
 	local _checked_out="$(/usr/bin/git checkout "${_commit}" 2>&1)"
@@ -242,10 +254,12 @@ function _breakable_copy_directory(){
 	wait
 	[ $_err -gt 0 ] && log "${_log_path}" "_FAILED_" "git  log -1 --oneline "
 	local _last_commit="$(<COMMIT)"
+  Message _breakable_copy_directory $LINENO
 	enforce_variable_with_value _last_commit "${_last_commit}"
 	local _last_lower="$(to_lowercase "${_last_commit}")"
 	Checking "_breakable_copy_directory _last_lower :${_last_lower}:$?"
 	# exit 0
+  Message _breakable_copy_directory $LINENO
 	enforce_variable_with_value _last_lower "${_last_lower}"
 	if [[ "${_last_lower}" == *"build(deps)"* ]]  || \
 		[[ "${_last_lower}" == *"dependabot"* ]] || \
@@ -431,25 +445,31 @@ function _one_liner_total(){
 
 function _break_all_commits(){
 	local _cwd=$(pwd)
+  Message _break_all_commits $LINENO
 	enforce_variable_with_value _cwd "${_cwd}"
 	local BASEFOLDER="${1}"   #    param order    varname        varvalue           sample_value
   (( DEBUG )) && Message "1:${1}"
+  Message _break_all_commits $LINENO
   enforce_parameter_with_value      1           BASEFOLDER     "${BASEFOLDER}"     "/home/peter/_/work/projects-web/website"
   #
   local TARGETFOLDER="${2}" #   param order    varname         varvalue           sample_value
   (( DEBUG )) && Message "2:${2}"
+  Message _break_all_commits $LINENO
   enforce_parameter_with_value      2           TARGETFOLDER   "${TARGETFOLDER}"   "/home/pizze/_/work/projects-web/breakage/"
   #
   local PACKAGER="${3}"     #   param order    varname         varvalue           sample_value
   (( DEBUG )) && Message "3:${3}"
+  Message _break_all_commits $LINENO
   enforce_parameter_with_value      3           PACKAGER       "${PACKAGER}"       "yarn"
   #
 	BASEFOLDER="$(_normalize_path_name "${BASEFOLDER}")"
+  Message _break_all_commits $LINENO
 	enforce_variable_with_value BASEFOLDER "${BASEFOLDER}"
 	directory_exists_with_spaces "${BASEFOLDER}"
 	directory_exists_with_spaces "${BASEFOLDER}/.git"
 	#
 	TARGETFOLDER="$(_normalize_path_name "${TARGETFOLDER}")"
+  Message _break_all_commits $LINENO
 	enforce_variable_with_value TARGETFOLDER "${TARGETFOLDER}"
 	directory_exists_with_spaces "${TARGETFOLDER}"
 	#
@@ -458,18 +478,22 @@ function _break_all_commits(){
   # (( DEBUG )) && exit 0
 	local _commits="$(_all_commits)"
 	[ $? -gt 0 ] && failed to get all commits
+	Message enforce_variable_with_value _commits "${_commits}"
 	enforce_variable_with_value _commits "${_commits}"
 	#
 	# DEBUG=1
 	#
 	local -i _total_commits="$(echo "${_commits}" | wc -l)"
+	Message enforce_variable_with_value _total_commits "${_total_commits}" 
 	enforce_variable_with_value _total_commits "${_total_commits}"
 	(( DEBUG )) && Message "_total_commits:${_total_commits}"
 	local -i _current_commit=$(( _total_commits ))
+	Message enforce_variable_with_value _current_commit "${_current_commit}"
 	enforce_variable_with_value _current_commit "${_current_commit}"
 	(( DEBUG )) && Message "_current_commit:${_current_commit}"
 	local _log_path="${_to}/breakage.log"
   (( DEBUG )) && echo "_log_path:${_log_path}"
+	Message enforce_variable_with_value _log_path "${_log_path}"
   enforce_variable_with_value _log_path "${_log_path}"
 	if it_exists_with_spaces "${_log_path}" ; then
 	{
@@ -489,6 +513,7 @@ function _break_all_commits(){
 		Message trying "${_commit}"
 		cd "${BASEFOLDER}"
     [[ -z "${_commit}" ]] && continue  # skip empties
+		Message enforce_variable_with_value _commit "${_commit}"
     enforce_variable_with_value _commit "${_commit}"
   	# cd "${BASEFOLDER}"
   	_commit_description="$(get_commit_7_description "${_commit}")"
