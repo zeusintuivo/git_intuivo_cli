@@ -2,34 +2,35 @@
 #
 # @author Zeus Intuivo <zeus@intuivo.com>
 #
-
+# set -u
 #colors
-[[ -z "${CYAN}" ]] && CYAN="\\033[38;5;123m"
-[[ -z "${PURPLE_BLUE}" ]] && PURPLE_BLUE="\\033[38;5;93m"
-[[ -z "${GRAY241}" ]] && GRAY241="\\033[38;5;241m"
-[[ -z "${YELLOW226}" ]] && YELLOW226="\\033[38;5;226m"
-[[ -z "${RESET}" ]] && RESET="\\033[0m"
-[[ -z "${RED}" ]] && RED="\\033[38;5;1m"
-[[ -z "${BRIGHT_BLUE87}" ]] && BRIGHT_BLUE87="\\033[38;5;87m"
+[[ -z "${CYAN:-}" ]] && CYAN="\\033[38;5;123m"
+[[ -z "${PURPLE_BLUE:-}" ]] && PURPLE_BLUE="\\033[38;5;93m"
+[[ -z "${GRAY241:-}" ]] && GRAY241="\\033[38;5;241m"
+[[ -z "${YELLOW226:-}" ]] && YELLOW226="\\033[38;5;226m"
+[[ -z "${YELLOW214:-}" ]] && YELLOW214="\\033[38;5;214m"
+[[ -z "${RESET:-}" ]] && RESET="\\033[0m"
+[[ -z "${RED:-}" ]] && RED="\\033[38;5;1m"
+[[ -z "${BRIGHT_BLUE87:-}" ]] && BRIGHT_BLUE87="\\033[38;5;87m"
 
-[[ -z "${GIT_USER_NAME}" ]] && GIT_USER_NAME=$(command git config user.name 2> /dev/null)
+[[ -z "${GIT_USER_NAME:-}" ]] && GIT_USER_NAME=$(command git config --get user.name 2> /dev/null)
 
 
 
 #KEY?
-    if [[ "${PWD}" == *"clis"* ]] ; then
-      if [[ "${GIT_USER_NAME}" != *"zeusintuivo"* ]] ; then
+    if [[ "${PWD:-}" == *"clis"* ]] ; then
+      if [[ "${GIT_USER_NAME:-}" != *"zeusintuivo"* ]] ; then
         sshswitchkey zeus ;
-        GIT_USER_NAME=$(command git config user.name 2> /dev/null)
+        GIT_USER_NAME=$(command git config --get user.name 2> /dev/null)
       fi
     else
       LOAD_TEMP_KEYS="# Empty script"
       if [ -f .temp_keys ] ; then
         LOAD_TEMP_KEYS=$(<.temp_keys)
         eval "${LOAD_TEMP_KEYS}"
-        if [[ ! -z "${SSH_KEY}" ]] && [[ "${GITUSER}" != "${GIT_USER_NAME}" ]] ; then
+        if [[ ! -z "${SSH_KEY:-}" ]] && [[ "${GITUSER}" != "${GIT_USER_NAME}" ]] ; then
           sshswitchkey "${SSH_KEY}"
-          GIT_USER_NAME=$(command git config user.name 2> /dev/null)
+          GIT_USER_NAME=$(command git config --get user.name 2> /dev/null)
         fi
       fi
     fi
@@ -74,9 +75,9 @@ fi
 # rebase
 if [[ "${*}" == *"--continue"* ]] ; then
 {
-  echo -e "${yellow214}"
+  echo -e "${YELLOW214}"
   echo "git rebase --continue"
-  echo -e "\033[38;5;28m === rebasing ${RED}Please Close COMMIT_MSG EDITORS in case it opens editor: ${RED}\"${yellow214} ${EDITORS}${RED}\" \033[38;5;28m window ${CURBRANCH}  \033[38;5;28m === \033[38;5;214m"
+  echo -e "\033[38;5;28m === rebasing ${RED}Please Close COMMIT_MSG EDITORS in case it opens editor: ${RED}\"${YELLOW214} ${EDITORS}${RED}\" \033[38;5;28m window ${CURBRANCH}  \033[38;5;28m === \033[38;5;214m"
 }
 fi
 REBASE_RESULTS="$(git rebase "$@" 2>&1)" # Check and catch capture all stout sdout output, error will return none 0 to $?)
@@ -87,7 +88,7 @@ if [[ "${*}" == *"--continue"* ]] && [[ "${REBASE_RESULTS}" == *": needs merge"*
   ANY_CONFLICTS="$(conflicts  2>&1 | grep 'm<<<<<< HEAD'  2>&1 | tail -1  2>&1 | cut -d: -f1  2>&1)" # Check and catch capture all stout sdout output, error will return none 0 to $?)
   if [[ -n "${ANY_CONFLICTS}" ]] && [[ -e "${ANY_CONFLICTS}" ]] ; then
   {
-    echo -e "${YELLOW226}${REBASE_RESULTS}${yellow214}"
+    echo -e "${YELLOW226}${REBASE_RESULTS}${YELLOW214}"
     exit 1
   }
   else
@@ -95,12 +96,12 @@ if [[ "${*}" == *"--continue"* ]] && [[ "${REBASE_RESULTS}" == *": needs merge"*
     EDITOR_LOCAL="$(git config --local core.editor)"
     EDITOR_GLOBAL="$(git config --global core.editor)"
     EDITORS="${EDITOR} ${EDITOR_LOCAL} ${EDITOR_GLOBAL} "
-    echo -e "${yellow214}"
+    echo -e "${YELLOW214}"
 
     echo "git add ."
     git add .
     echo "git rebase --continue"
-    echo -e "\033[38;5;28m === committing pending ${RED}Please Close COMMIT_MSG EDITORS editor: ${RED}\"${yellow214} ${EDITORS}${RED}\" \033[38;5;28m window ${CURBRANCH}  \033[38;5;28m === \033[38;5;214m"
+    echo -e "\033[38;5;28m === committing pending ${RED}Please Close COMMIT_MSG EDITORS editor: ${RED}\"${YELLOW214} ${EDITORS}${RED}\" \033[38;5;28m window ${CURBRANCH}  \033[38;5;28m === \033[38;5;214m"
     REBASE_RESULTS="$(git rebase --continue 2>&1)" # Check and catch capture all stout sdout output, error will return none 0 to $?)
   }
   fi
@@ -110,14 +111,14 @@ if [[ "${*}" == *"--continue"* ]] && [[ "${REBASE_RESULTS}" == *"conflicts"* ]] 
 {
   REBASE_CONFLICTS="$(conflicts 2>&1 | grep 'm<<<<<< HEAD' 2>&1 | cut -d\0 -f1 )"
   echo -e "\033[38;5;21m === git process responded \033[38;5;21m === \033[38;5;214m"
-  echo -e "${red}${REBASE_RESULTS}${yellow214}"
-  echo -e "\033[38;5;21m === conflicts located \033[38;5;21m === \033[38;5;214m"
-  echo -e "${red}${REBASE_CONFLICTS}${yellow214}"
+  echo -e "${RED}${REBASE_RESULTS}${YELLOW214}${RESET}"
+  echo -e "\033[38;5;21m === ${YELLOW226} conflicts located \033[38;5;21m === \033[38;5;214m"
+  echo -e "${RED}${REBASE_CONFLICTS}${YELLOW214}${RESET}"
   exit 1
 }
 else
 {
-  echo -e "${reset}${REBASE_RESULTS}"
+  echo -e "${RESET}${REBASE_RESULTS}${RESET}"
 }
 fi
 
