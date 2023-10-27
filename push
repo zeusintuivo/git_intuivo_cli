@@ -2,41 +2,71 @@
 #
 # @author Zeus Intuivo <zeus@intuivo.com>
 #
+#set -u
 
-#colors
-[[ -z "${CYAN}" ]] && CYAN="\\033[38;5;123m"
-[[ -z "${PURPLE_BLUE}" ]] && PURPLE_BLUE="\\033[38;5;93m"
-[[ -z "${GRAY241}" ]] && GRAY241="\\033[38;5;241m"
-[[ -z "${YELLOW226}" ]] && YELLOW226="\\033[38;5;226m"
-[[ -z "${RESET}" ]] && RESET="\\033[0m"
-[[ -z "${RED}" ]] && RED="\\033[38;5;1m"
-[[ -z "${BRIGHT_BLUE87}" ]] && BRIGHT_BLUE87="\\033[38;5;87m"
+function load_colors() {
+  [[ -z "${CYAN:-}" ]] && CYAN="\\033[38;5;123m"
+  [[ -z "${PURPLE_BLUE:-}" ]] && PURPLE_BLUE="\\033[38;5;93m"
+  [[ -z "${YELLOW226:-}" ]] && YELLOW226="\\033[38;5;226m"
+  [[ -z "${GRAY241:-}" ]] && GRAY241="\\033[38;5;241m"
+  [[ -z "${GRAY242:-}" ]] && GRAY242="\\033[38;5;242m"
+  [[ -z "${GRAY243:-}" ]] && GRAY243="\\033[38;5;243m"
+  [[ -z "${YELLOW214:-}" ]] && YELLOW214="\\033[38;5;214m"
+  [[ -z "${RESET:-}" ]] && RESET="\\033[0m"
+  [[ -z "${RED:-}" ]] && RED="\\033[38;5;1m"
+  [[ -z "${BRIGHT_BLUE87:-}" ]] && BRIGHT_BLUE87="\\033[38;5;87m"
+  GRAYEDOUT="\033[01;30m"
+  RED="\033[01;31m"
+  GREEN="\033[01;32m"
+  YELLOW="\033[01;33m"
+  DARKBLUE="\033[01;34m"
+  DARKGREEN="\033[38;5;22m"
+  PURPLE="\033[01;35m"
+  CYAN="\033[01;36m"
+  WHITEBOLD="\033[01;37m"
 
-[[ -z "${GIT_USER_NAME}" ]] && GIT_USER_NAME=$(command git config user.name 2> /dev/null)
+  LIGHTGREEN="\033[38;5;83m"
+  LIGHTPINK="\033[1;204m"
+  LIGHTYELLOW="\033[38;5;227m"
+  GREEN_OVER_DARKBLUE="\033[38;5;76m\033[48;5;17m"
+  YELLOW_OVER_DARKBLUE="\033[38;5;220m\033[48;5;20m"
+  DARKBLUE_OVER_DARKBLUE="\033[01;34m\033[48;5;20m"
+
+  RESET="\033[0m"
+} # end load_colors
+load_colors
 
 
-
+#PULLCURRENTBRANCH
+# ref: http://stackoverflow.com/questions/8190392/is-there-a-git-command-that-returns-the-current-project-name
+[[ -z "${PULLCURRENTBRANCH:-}" ]] && PULLCURRENTBRANCH=$(git config --local remote.origin.url|sed -n 's#.*/\([^.]*\)\.git#\1#p');
+[[ -z "${GIT_USER_NAME:-}" ]] && GIT_USER_NAME=$(command git config --get user.name 2> /dev/null)
+#echo "GIT_USER_NAME=$GIT_USER_NAME"
 #KEY?
     if [[ "${PWD}" == *"clis"* ]] ; then
+      echo -e "${GRAY242} === ${GRAYEDOUT} "We are in clis" ${GRAY242} === ${RESET}"
       if [[ "${GIT_USER_NAME}" != *"zeusintuivo"* ]] ; then
         sshswitchkey zeus ;
-        GIT_USER_NAME=$(command git config user.name 2> /dev/null)
+        GIT_USER_NAME=$(command git config --get user.name 2> /dev/null)
       fi
     else
       LOAD_TEMP_KEYS="# Empty script"
       if [ -f .temp_keys ] ; then
         LOAD_TEMP_KEYS=$(<.temp_keys)
         eval "${LOAD_TEMP_KEYS}"
-        if [[ ! -z "${SSH_KEY}" ]] && [[ "${GITUSER}" != "${GIT_USER_NAME}" ]] ; then
+        if [[ -n "${SSH_KEY:-}" ]] && [[ "${GITUSER:-}" != "${GIT_USER_NAME}" ]] ; then
+          echo -e "${RED} === ${GRAYEDOUT} required GITUSER:${GRAY241}${GITUSER:-} ${GRAY242}=?= ${GRAY243}${GIT_USER_NAME}${GRAYEDOUT}:GIT_USER_NAME ${RED} === ${RESET}"
           sshswitchkey "${SSH_KEY}"
-          GIT_USER_NAME=$(command git config user.name 2> /dev/null)
+          GIT_USER_NAME=$(command git config --get user.name 2> /dev/null)
         fi
       fi
     fi
+
 #
 # C H E C K   H O W   C O M P U T E R   H A N D L E S   E R R O R S   --Start
 #
 test_positives(){
+  # REF https://stackoverflow.com/questions/1101957/are-there-any-standard-exit-status-codes-in-linux
   KIND=""
   ls werwerwerwerwerwerwerwerwerwerwerr >/dev/null 2>&1;
   if (( $? == 0 )) ;  then  # Intel processor
