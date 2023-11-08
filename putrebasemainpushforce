@@ -1,0 +1,21 @@
+#!/bin/bash
+# 
+# @author Zeus Intuivo <zeus@intuivo.com>
+#
+#
+
+git fetch -f origin main:main &
+
+bundle exec rubocop -A 
+wait
+if [ ${#} -gt 0 ] ; then
+  put "${*}"
+else
+  put "Commiting and pushing TIME=$(date "+%H:%M")"
+fi
+wait
+git rebase origin/main
+wait
+PUSH_CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD);
+git push --set-upstream origin "${PUSH_CURRENT_BRANCH}" --force &
+

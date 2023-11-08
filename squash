@@ -237,12 +237,12 @@ function squash_commits(){
 		echo -e "${PURPLE_BLUE} === ${RED} git remote not found ${PURPLE_BLUE} === ${RESET}"
 		# Change remote target if there is a config line about it
 		_remote="${_found_remote_nick}"  # usually origin
-		echo "git push --force ${_remote} ${_branch} "
+		echo "git push --force origin ${_remote} ${_branch} "
 		git push --force "${_remote}" "${_branch}"
 	}
 	else
 	{
-		echo "git push --force ${_branch} "
+		echo "git push --force origin ${_branch} "
 		git push --force "${_branch}"
 	}
 	fi
