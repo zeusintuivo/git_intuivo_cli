@@ -4,18 +4,80 @@
 #
 #
 
+# pull
 git fetch -f origin main:main &
+if [ ${?} -gt 0  ] ; then
+  echo "Error while fetch main.  Better check that "
+  exit 1
+fi
 
+
+# rubocop
 bundle exec rubocop -A 
-wait
-if [ ${#} -gt 0 ] ; then
-  put "${*}"
-else
-  put "Commiting and pushing TIME=$(date "+%H:%M")"
+if [ ${?} -gt 0  ] ; then
+  bundle exec rubocop -A 
+  if [ ${?} -eq 1  ] ; then
+    echo "Error fix first rubocop"
+    exit 1
+  fi
 fi
 wait
-git rebase origin/main
-wait
+
+
+
+
+# get vars
+GIT_USER_NAME=$(command git config user.name 2> /dev/null)
+LASTTIME=$(echo $(git log --author="${GIT_USER_NAME}" --pretty=format:"%cd;  %h;  %s" | head -1 | cut -d\  -f4   2> /dev/null))
+# LASTTIME=$(git log --author="${GIT_USER_NAME}" --pretty=format:"%cd;  %h;  %s" | head -1 | cut -d\  -f4  2> /dev/null)
+CURRENTTIME="$(date +%H:%M)"
+TIME_TOOK=$(date "+%H:%M" -d "${LASTTIME}" 2>&1 )
+if [ ${?} -gt 0  ] ; then
+  echo "TIME_TOOK:${TIME_TOOK}"
+
+  echo "Error TIME_TOOK.  Better check that "
+  #exit 1
+fi
+
 PUSH_CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD);
+if [[ -z "${TIME_TOOK:-}" ]] ; then
+  TIME_TOOK="${CURRENTTIME}"
+fi
+echo "TIME_TOOK:${TIME_TOOK}"
+
+
+
+
+
+# put
+if [ ${#} -gt 0 ] ; then
+  put "180:00" "${*}"
+else
+  put "60:00" "Commiting and pushing generic push"
+fi
+if [ ${?} -gt 0  ] ; then
+  echo "Error doing put commit "
+  exit 1
+fi
+wait
+
+
+
+# rebase
+git rebase origin/main
+if [ ${?} -gt 0  ] ; then
+  echo "Error doing rebase. Better check that "
+  exit 1
+fi
+wait
+
+
+
+
+# push
 git push --set-upstream origin "${PUSH_CURRENT_BRANCH}" --force &
+if [ ${?} -gt 0  ] ; then
+  echo "Error push force Better check that "
+  exit 1
+fi
 
