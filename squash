@@ -96,7 +96,7 @@ function yes_or_no() {
 					[Nn]*) echo "Aborted" ; return  1 ;;
 			esac
 	done
-} # end yes no
+} # end yes_or_no
 
 function edit_or_soft_reset() {
 	while true; do
