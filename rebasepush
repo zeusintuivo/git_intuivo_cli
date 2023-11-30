@@ -1,4 +1,15 @@
-git fetch -f origin main:main
+#/bin/bash
+
+PULLCURRENTBRANCH=$(git rev-parse --abbrev-ref HEAD);
+TARGETBRNACH="${1:-main}"
+
+echo "git fetch -f origin ${TARGETBRNACH}:${TARGETBRNACH}"
+git fetch -f origin "${TARGETBRNACH}":"${TARGETBRNACH}"
+echo "git fetch "
 git fetch 
-git rebase main
+echo "git rebase ${TARGETBRNACH}"
+git rebase "${TARGETBRNACH}"
+echo "git push --set-upstream origin ${PULLCURRENTBRANCH}"
+git push --set-upstream origin "${PULLCURRENTBRANCH}"
+echo "git push --force"
 git push --force
