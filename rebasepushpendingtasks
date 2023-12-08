@@ -1,0 +1,98 @@
+#!/bin/bash
+
+set -xu
+
+function load_global_colors(){
+  [[ -z "${BLACK}" ]] && BLACK="\\033[38;5;16m"
+  [[ -z "${BRIGHT_BLUE87}" ]] && BRIGHT_BLUE87="\\033[38;5;87m"
+  [[ -z "${CYAN}" ]] && CYAN="\\033[38;5;123m"
+  [[ -z "${GRAY241}" ]] && GRAY241="\\033[38;5;241m"
+  [[ -z "${GREEN}" ]] && GREEN="\\033[38;5;22m"
+  [[ -z "${PURPLE_BLUE}" ]] && PURPLE_BLUE="\\033[38;5;93m"
+  [[ -z "${PURPLE}" ]] && PURPLE="\\033[01;35m"
+  [[ -z "${RED}" ]] && RED="\\033[38;5;1m"
+  [[ -z "${RESET_PROMPT}" ]] && RESET_PROMPT="[0m"
+  [[ -z "${RESET}" ]] && RESET="\\033[0m"
+  [[ -z "${YELLOW220}" ]] && YELLOW220="\\033[38;5;220m"
+  [[ -z "${YELLOW226}" ]] && YELLOW226="\\033[38;5;226m"
+  [[ -z "${YELLOW}" ]] && YELLOW="\\033[01;33m"
+} # end load_global_colors
+load_global_colors
+
+
+if command -v git_current_branch >/dev/null 2>&1; then # git_current_branch polyfill
+{
+  echo " "
+  echo -e "Get Branch git_current_branch installed"
+}
+else
+{
+  git_current_branch() {
+    local ref
+    ref=$(command git symbolic-ref --quiet HEAD 2> /dev/null)
+    local ret=$?
+    if [[ $ret != 0 ]]
+    then
+      [[ $ret = 128 ]] && return
+      ref=$(command git rev-parse --short HEAD 2> /dev/null)  || return
+    fi
+    echo ${ref#refs/heads/}
+  }
+}
+fi
+
+
+function _rebase_push_pending_work(){
+  local -i _err=0
+  local _current_branch=$(git_current_branch)
+  local _list=""
+  _list="$(<.rebasepushpending_list)"
+  _err=$?
+  if [ ${_err} -gt 0 ] || [ -z "${_list}" ] ; then 
+  {
+    echo -e "${RED} ERROR - ${YELLOW220} There was an error trying to switch branch ${RESET}"
+    echo -e "${PURPLE_BLUE}  + output of \$_list    ${GRAY241}:${}${_YELLOW226}${_list}${RESET}"
+    echo -e "${PURPLE_BLUE}  + maybe file .rebasepushpending_list${RED}:${_YELLOW226}is missing or empty. make one with a list of branches to work on rebasepushing${RESET}"
+    echo -e "${PURPLE_BLUE}  +                                   ${RED}:${_YELLOW226}${RESET}"
+    echo -e "${PURPLE_BLUE}  +                                   ${RED}:${_YELLOW226}nano .rebasepushpending_list${RESET}"
+    echo -e "${PURPLE_BLUE}  +                                   ${RED}:${_YELLOW226}echo \"${_current_branch}\" >> .rebasepushpending_list${RESET}"
+    echo -e "${PURPLE_BLUE}  +                                   ${RED}:${_YELLOW226}${RESET}"
+    echo -e "${PURPLE_BLUE}  + output of \$?        ${GRAY241}:${RED}${_err}${RESET}"
+    [ ${_err} -gt 0 ] exit ${_err}
+    exit 1
+  }
+  if
+  local _one=""
+  local _exists=""
+  while read -r _one ; do
+  {
+    [[ -z "${_one}" ]] && continue
+    if [ $(git branch --list "${_one}") ] ; then # if branch exits if does not exist it will get into the then{}
+    {
+      echo -e "${PURPLE_BLUE}  +  git checkout \"${_one}\""
+      git checkout "${_one}"
+      _err=$?
+      if [ ${_err} -gt 0 ] ; then 
+      { 
+        echo -e "${RED} ERROR - ${YELLOW220} There was an error trying to switch branch ${RESET}" 
+        echo -e "${PURPLE_BLUE}  + output of \$?        ${GRAY241}:${RED}${_err}${RESET}"
+        exit ${_err}
+      }
+      fi
+      rebasepush
+      _err=$?
+      if [ ${_err} -gt 0 ] ; then 
+      { 
+        echo -e "${RED} ERROR - ${YELLOW220} There was an error doing rebasepush ${RESET}" 
+        echo -e "${PURPLE_BLUE}  + output of \$?        ${GRAY241}:${RED}${_err}${RESET}"
+        exit ${_err}
+      }
+      fi
+    }
+    fi 
+  }
+  done <<< "${_list}"
+  
+} # end _rebase_push_pending_work
+
+_rebase_push_pending_work

@@ -16,3 +16,10 @@ git branch --set-upstream-to=origin/"${PULLCURRENTBRANCH}"  "${PULLCURRENTBRANCH
 
 echo "git push --force"
 git push --force
+
+echo "git push --set-upstream origin  ${PULLCURRENTBRANCH}"
+git push --set-upstream origin  "${PULLCURRENTBRANCH}"
+
+echo "git push --force"
+git push --force
+
