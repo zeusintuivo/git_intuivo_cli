@@ -1,0 +1,24 @@
+#/bin/bash
+
+PULLCURRENTBRANCH=$(git rev-parse --abbrev-ref HEAD);
+TARGETBRNACH="${1:-main}"
+
+echo "git fetch -f origin ${TARGETBRNACH}:${TARGETBRNACH}"
+git fetch -f origin "${TARGETBRNACH}":"${TARGETBRNACH}"
+
+echo "git fetch "
+git fetch 
+
+echo "git pull --set-upstream origin  ${PULLCURRENTBRANCH}"
+git pull --set-upstream origin  "${PULLCURRENTBRANCH}"
+
+echo "git pull"
+git pull
+
+echo "git rebase ${TARGETBRNACH}"
+git rebase "${TARGETBRNACH}"
+
+echo 'git branch --set-upstream-to=origin/'"${PULLCURRENTBRANCH}"'  '"${PULLCURRENTBRANCH}"
+git branch --set-upstream-to=origin/"${PULLCURRENTBRANCH}"  "${PULLCURRENTBRANCH}"
+
+
