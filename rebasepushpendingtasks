@@ -1,21 +1,22 @@
 #!/bin/bash
 
-set -xu
-
+# set -xu Show all execution lines
+# set -eu Exit on error
+set -u
 function load_global_colors(){
-  [[ -z "${BLACK}" ]] && BLACK="\\033[38;5;16m"
-  [[ -z "${BRIGHT_BLUE87}" ]] && BRIGHT_BLUE87="\\033[38;5;87m"
-  [[ -z "${CYAN}" ]] && CYAN="\\033[38;5;123m"
-  [[ -z "${GRAY241}" ]] && GRAY241="\\033[38;5;241m"
-  [[ -z "${GREEN}" ]] && GREEN="\\033[38;5;22m"
-  [[ -z "${PURPLE_BLUE}" ]] && PURPLE_BLUE="\\033[38;5;93m"
-  [[ -z "${PURPLE}" ]] && PURPLE="\\033[01;35m"
-  [[ -z "${RED}" ]] && RED="\\033[38;5;1m"
-  [[ -z "${RESET_PROMPT}" ]] && RESET_PROMPT="[0m"
-  [[ -z "${RESET}" ]] && RESET="\\033[0m"
-  [[ -z "${YELLOW220}" ]] && YELLOW220="\\033[38;5;220m"
-  [[ -z "${YELLOW226}" ]] && YELLOW226="\\033[38;5;226m"
-  [[ -z "${YELLOW}" ]] && YELLOW="\\033[01;33m"
+  [[ -z "${BLACK-}" ]] && BLACK="\\033[38;5;16m"
+  [[ -z "${BRIGHT_BLUE87-}" ]] && BRIGHT_BLUE87="\\033[38;5;87m"
+  [[ -z "${CYAN-}" ]] && CYAN="\\033[38;5;123m"
+  [[ -z "${GRAY241-}" ]] && GRAY241="\\033[38;5;241m"
+  [[ -z "${GREEN-}" ]] && GREEN="\\033[38;5;22m"
+  [[ -z "${PURPLE_BLUE-}" ]] && PURPLE_BLUE="\\033[38;5;93m"
+  [[ -z "${PURPLE-}" ]] && PURPLE="\\033[01;35m"
+  [[ -z "${RED-}" ]] && RED="\\033[38;5;1m"
+  [[ -z "${RESET_PROMPT-}" ]] && RESET_PROMPT="[0m"
+  [[ -z "${RESET-}" ]] && RESET="\\033[0m"
+  [[ -z "${YELLOW220-}" ]] && YELLOW220="\\033[38;5;220m"
+  [[ -z "${YELLOW226-}" ]] && YELLOW226="\\033[38;5;226m"
+  [[ -z "${YELLOW-}" ]] && YELLOW="\\033[01;33m"
 } # end load_global_colors
 load_global_colors
 
@@ -27,7 +28,7 @@ if command -v git_current_branch >/dev/null 2>&1; then # git_current_branch poly
 }
 else
 {
-  git_current_branch() {
+  function git_current_branch() {
     local ref
     ref=$(command git symbolic-ref --quiet HEAD 2> /dev/null)
     local ret=$?
@@ -36,8 +37,8 @@ else
       [[ $ret = 128 ]] && return
       ref=$(command git rev-parse --short HEAD 2> /dev/null)  || return
     fi
-    echo ${ref#refs/heads/}
-  }
+    echo "${ref#refs/heads/}"
+  } # end git_current_branch
 }
 fi
 
@@ -51,48 +52,79 @@ function _rebase_push_pending_work(){
   if [ ${_err} -gt 0 ] || [ -z "${_list}" ] ; then 
   {
     echo -e "${RED} ERROR - ${YELLOW220} There was an error trying to switch branch ${RESET}"
-    echo -e "${PURPLE_BLUE}  + output of \$_list    ${GRAY241}:${}${_YELLOW226}${_list}${RESET}"
-    echo -e "${PURPLE_BLUE}  + maybe file .rebasepushpending_list${RED}:${_YELLOW226}is missing or empty. make one with a list of branches to work on rebasepushing${RESET}"
-    echo -e "${PURPLE_BLUE}  +                                   ${RED}:${_YELLOW226}${RESET}"
-    echo -e "${PURPLE_BLUE}  +                                   ${RED}:${_YELLOW226}nano .rebasepushpending_list${RESET}"
-    echo -e "${PURPLE_BLUE}  +                                   ${RED}:${_YELLOW226}echo \"${_current_branch}\" >> .rebasepushpending_list${RESET}"
-    echo -e "${PURPLE_BLUE}  +                                   ${RED}:${_YELLOW226}${RESET}"
-    echo -e "${PURPLE_BLUE}  + output of \$?        ${GRAY241}:${RED}${_err}${RESET}"
-    [ ${_err} -gt 0 ] exit ${_err}
+    echo -e "${PURPLE_BLUE}  + output of \$_list             ${GRAY241}:${YELLOW226}${_list}${RESET}"
+    echo -e "${PURPLE_BLUE}  + maybe file .rebasepushpending_list${RED}:${YELLOW226}is missing or empty. make one with a list of branches to work on rebasepushing${RESET}"
+    echo -e "${PURPLE_BLUE}  +                                   ${RED}:${YELLOW226}${RESET}"
+    echo -e "${PURPLE_BLUE}  +                                   ${RED}:${YELLOW226}nano .rebasepushpending_list${RESET}"
+    echo -e "${PURPLE_BLUE}  +                                   ${RED}:${YELLOW226}echo \"${_current_branch}\" >> .rebasepushpending_list${RESET}"
+    echo -e "${PURPLE_BLUE}  +                                   ${RED}:${YELLOW226}${RESET}"
+    echo -e "${PURPLE_BLUE}  + output of \$?                      ${GRAY241}:${RED}${_err}${RESET}"
+    [ ${_err} -gt 0 ] && exit ${_err}
     exit 1
   }
-  if
+  fi
   local _one=""
-  local _exists=""
+  local _failed=""
+  local _msg=""
   while read -r _one ; do
   {
     [[ -z "${_one}" ]] && continue
     if [ $(git branch --list "${_one}") ] ; then # if branch exits if does not exist it will get into the then{}
     {
-      echo -e "${PURPLE_BLUE}  +  git checkout \"${_one}\""
-      git checkout "${_one}"
+      echo -e "${PURPLE_BLUE}  +  git checkout \"${_one}\"${RESET}"
+      _msg="$(git checkout "${_one}" 2>&1)" 2>&1  # capture stdout and stderr
       _err=$?
-      if [ ${_err} -gt 0 ] ; then 
-      { 
-        echo -e "${RED} ERROR - ${YELLOW220} There was an error trying to switch branch ${RESET}" 
+      if [ ${_err} -gt 0 ] ; then
+      {
+        echo -e "${RED} ERROR - ${YELLOW220} There was an error trying to switch branch ${RESET}"
         echo -e "${PURPLE_BLUE}  + output of \$?        ${GRAY241}:${RED}${_err}${RESET}"
-        exit ${_err}
+        _failed="${_failed}
+|@|${_one}|${_err}|${_msg}|"
+        continue
+        # exit ${_err}
       }
       fi
-      rebasepush
+      echo -e "${PURPLE_BLUE}  +  git pull ${RESET}"
+      _msg="$(git pull 2>&1)" 2>&1  # capture stdout and stderr
       _err=$?
-      if [ ${_err} -gt 0 ] ; then 
-      { 
-        echo -e "${RED} ERROR - ${YELLOW220} There was an error doing rebasepush ${RESET}" 
+      if [ ${_err} -gt 0 ] ; then
+      {
+        echo -e "${RED} ERROR - ${YELLOW220} There was an error trying to switch branch ${RESET}"
         echo -e "${PURPLE_BLUE}  + output of \$?        ${GRAY241}:${RED}${_err}${RESET}"
-        exit ${_err}
+        _failed="${_failed}
+|@|${_one}|${_err}|${_msg}|"
+        continue
+        # exit ${_err}
+      }
+      fi
+      echo -e "${PURPLE_BLUE}  + rebasepush ${RESET}"
+      _msg="$(rebasepush 2>&1)" 2>&1  # capture stdout and stderr
+      _err=$?
+      if [ ${_err} -gt 0 ] ; then
+      {
+        echo -e "${RED} ERROR - ${YELLOW220} There was an error doing rebasepush ${RESET}"
+        echo -e "${RED} ERROR - ${YELLOW220} rebase  ${RED}--abort  ${RESET}"
+        echo -e "${PURPLE_BLUE}  + output of \$?        ${GRAY241}:${RED}${_err}${RESET}"
+        git rebase --abort
+        _failed="${_failed}
+|@|${_one}|${_err}|${_msg}|"
+        # exit ${_err}
       }
       fi
     }
-    fi 
+    fi
   }
   done <<< "${_list}"
-  
+  if [[ -n "${_failed:-}" ]] ; then
+  {
+    echo -e "${RED} ERROR - ${YELLOW220} The following branches failed ${RESET}"
+    echo -e "${PURPLE_BLUE}  + output of \$_failed  ${RESET}"
+    echo "${_failed}"
+    exit 1
+  }
+  fi
 } # end _rebase_push_pending_work
 
 _rebase_push_pending_work
+
+
