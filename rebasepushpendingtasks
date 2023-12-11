@@ -66,6 +66,7 @@ function _rebase_push_pending_work(){
   local _one=""
   local _failed=""
   local _msg=""
+  local -i _counter=0
   while read -r _one ; do
   {
     [[ -z "${_one}" ]] && continue
@@ -91,8 +92,10 @@ function _rebase_push_pending_work(){
       {
         echo -e "${RED} ERROR - ${YELLOW220} There was an error trying to switch branch ${RESET}"
         echo -e "${PURPLE_BLUE}  + output of \$?        ${GRAY241}:${RED}${_err}${RESET}"
+        (( _counter++ ))
         _failed="${_failed}
-|@|${_one}|${_err}|${_msg}|"
+${GRAY241-}----------------------------------- ${RED}${_counter} ${GRAY241-}----------------------------------- ${RESET}
+${PURPLE_BLUE}|${RED}@${PURPLE_BLUE}|${GRAY241-}${_one}${PURPLE_BLUE}|${YELLOW220}${_err}${PURPLE_BLUE}|${GRAY241}${_msg}${PURPLE_BLUE}|${RESET}"
         continue
         # exit ${_err}
       }
@@ -106,15 +109,19 @@ function _rebase_push_pending_work(){
         echo -e "${RED} ERROR - ${YELLOW220} rebase  ${RED}--abort  ${RESET}"
         echo -e "${PURPLE_BLUE}  + output of \$?        ${GRAY241}:${RED}${_err}${RESET}"
         git rebase --abort
+        (( _counter++ ))
         _failed="${_failed}
-|@|${_one}|${_err}|${_msg}|"
+${GRAY241-}----------------------------------- ${RED}${_counter} ${GRAY241-}----------------------------------- ${RESET}
+${PURPLE_BLUE}|${RED}@${PURPLE_BLUE}|${GRAY241-}${_one}${PURPLE_BLUE}|${YELLOW220}${_err}${PURPLE_BLUE}|${GRAY241}${_msg}${PURPLE_BLUE}|${RESET}"
+        # ----------------------------------- ${_counter} -----------------------------------
+        # |@|${_one}|${_err}|${_msg}|"
         # exit ${_err}
       }
       fi
     }
     fi
   }
-  done <<< "${_list}"
+  done <<< "$(echo "${_list}" | grep -vE '^#' | grep -vE '^\s+#')" # remove lines starting with #
   if [[ -n "${_failed:-}" ]] ; then
   {
     echo -e "${RED} ERROR - ${YELLOW220} The following branches failed ${RESET}"
