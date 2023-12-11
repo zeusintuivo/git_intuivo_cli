@@ -1,25 +1,160 @@
-#/bin/bash
+#/usr/bin/env bash
+set -u
 
-PULLCURRENTBRANCH=$(git rev-parse --abbrev-ref HEAD);
-TARGETBRNACH="${1:-main}"
+if ! declare -A test_array > /dev/null 2>&1; then
+  echo "TIP: Associative arrays are supported (Bash 4.0 and above) only"
+fi
 
-echo "git fetch -f origin ${TARGETBRNACH}:${TARGETBRNACH}"
-git fetch -f origin "${TARGETBRNACH}":"${TARGETBRNACH}"
-echo "git fetch "
-git fetch 
-echo "git rebase ${TARGETBRNACH}"
-git rebase "${TARGETBRNACH}"
-# echo "git push --set-upstream origin ${PULLCURRENTBRANCH}"
-# git push --set-upstream origin "${PULLCURRENTBRANCH}"
-echo 'git branch --set-upstream-to=origin/'"${PULLCURRENTBRANCH}"'  '"${PULLCURRENTBRANCH}"
-git branch --set-upstream-to=origin/"${PULLCURRENTBRANCH}"  "${PULLCURRENTBRANCH}"
+function load_global_colors(){
+  [[ -z "${BLACK-}" ]] && BLACK="\\033[38;5;16m"
+  [[ -z "${BRIGHT_BLUE87-}" ]] && BRIGHT_BLUE87="\\033[38;5;87m"
+  [[ -z "${CYAN-}" ]] && CYAN="\\033[38;5;123m"
+  [[ -z "${GRAY241-}" ]] && GRAY241="\\033[38;5;241m"
+  [[ -z "${GREEN-}" ]] && GREEN="\\033[38;5;22m"
+  [[ -z "${PURPLE_BLUE-}" ]] && PURPLE_BLUE="\\033[38;5;93m"
+  [[ -z "${PURPLE-}" ]] && PURPLE="\\033[01;35m"
+  [[ -z "${RED-}" ]] && RED="\\033[38;5;1m"
+  [[ -z "${RESET_PROMPT-}" ]] && RESET_PROMPT="[0m"
+  [[ -z "${RESET-}" ]] && RESET="\\033[0m"
+  [[ -z "${YELLOW220-}" ]] && YELLOW220="\\033[38;5;220m"
+  [[ -z "${YELLOW226-}" ]] && YELLOW226="\\033[38;5;226m"
+  [[ -z "${YELLOW-}" ]] && YELLOW="\\033[01;33m"
+} # end load_global_colors
+load_global_colors
 
-echo "git push --force"
-git push --force
 
-echo "git push --set-upstream origin  ${PULLCURRENTBRANCH}"
-git push --set-upstream origin  "${PULLCURRENTBRANCH}"
+function _perform_rebase_push(){
+  local -i _err=0
+  
+  # get parameter
+  local TARGET_BRANCH="${1:-main}"
+  _err=$?
+  if [ ${_err} -gt 0 ]; then
+    echo "Error getting TARGET_BRANCH parameter. Better check that: $0 ${*}"
+    exit ${_err}
+  fi
+  echo "${PURPLE-} # TARGET_BRANCH${PURPLE_BLUE-}:${RED-}${TARGET_BRANCH}${RESET-}"
 
-echo "git push --force"
-git push --force
+  # pull current branch
+  local _pull_current_branch="$(git rev-parse --abbrev-ref HEAD 2>&1)";
+  _err=$?
+  if [ ${_err} -gt 0 ]; then
+    echo "Error getting _pull_current_branch. Better check that: ${_pull_current_branch}"
+    exit ${_err}
+  fi
+
+# 1.description     # 2.local variable   # 3.action 
+  local _steps="
+# get parameter       |TARGET_BRANCH       |echo -n \"${1:-main}\"
+# pull current branch |_pull_current_branch|git rev-parse --abbrev-ref HEAD
+fetch target        |                    |git fetch -f origin \"${TARGET_BRANCH}\":\"${TARGET_BRANCH}\"
+fetch current branch|                    |git fetch 
+git rebase          |                    |git rebase \"${TARGET_BRANCH}\"
+set branch stream   |                    |git branch --set-upstream-to=origin/\"${_pull_current_branch}\"  \"${_pull_current_branch}\"
+push forced         |                    |git push --force
+push upstream       |                    |git push --set-upstream origin  \"${_pull_current_branch}\"
+push forced agaibn  |                    |git push --force
+"
+  local _one _description _local_variable _msg _msg2 _action _failed
+  while read -r _one ; do
+  {
+    [[ -z "${_one}" ]] && continue # skip ignored or empty lines
+    _description="$(cut -d'|' -f1 <<<"${_one}")" 
+    _local_variable="$(cut -d'|' -f2 <<<"${_one}" | xargs)" 
+    _action="$(cut -d'|' -f3 <<<"${_one}")"
+    
+    echo "${PURPLE-} # ${_description}  ${RESET-}"
+    [[ -z "${_action}" ]] && continue  # skip no actions
+    echo "${GRAY241-}   \____ ${YELLOW226-} ${_action}  ${RESET-}"
+    _msg="$(eval "${_action}")"
+    _err=$?
+    if [ ${_err} -gt 0 ]; then
+    {
+      echo "$0 ${RED-} Error doing ${CYAN-}${_description}${PURPLE-}. Better check that: ${CYAN-}${_msg}${RESET-}"
+      exit ${_err}
+    }
+    fi
+
+    [[ -z "${_local_variable}" ]] && continue  # skip if no variable target provided or empty lines
+    _msg2="$(eval "local ${_local_variable}=\"${_msg}\"")"
+    _err=$?
+    if [ ${_err} -gt 0 ]; then
+    {
+      echo "$0 ${RED-} Assigning value to _local_variable:${CYAN-}${_local_variable}${RED-}  = ${YELLOW226-}value :${CYAN-}${_msg}: ${PURPLE-}. Better check that: ${CYAN-}${_msg2}${RESET-}"
+      exit ${_err}
+    }
+    fi
+
+  }
+  done <<< "$(echo "${_steps}" | grep -vE '^#' | grep -vE '^\s+#')" # remove lines starting with #
+  
+
+} # end _perform_rebase_push
+
+_perform_rebase_push ${*-}
+
+
+function disabled__older__line__by__line_todo_remove_TODO(){
+
+  # get parameter
+  local TARGET_BRANCH="${1:-main}"
+  _err=$?
+  if [ ${_err} -gt 0 ]; then
+    echo "Error getting TARGET_BRANCH parameter. Better check that: $0 ${*}"
+    exit ${_err}
+  fi
+  echo "TARGET_BRANCH:${TARGET_BRANCH}"
+
+
+  # pull current branch
+  local _pull_current_branch="$(git rev-parse --abbrev-ref HEAD 2>&1)";
+  _err=$?
+  if [ ${_err} -gt 0 ]; then
+    echo "Error getting _pull_current_branch. Better check that: ${_pull_current_branch}"
+    exit ${_err}
+  fi
+
+  # fetch target 
+  echo "git fetch -f origin ${TARGET_BRANCH}:${TARGET_BRANCH}"
+  git fetch -f origin "${TARGET_BRANCH}":"${TARGET_BRANCH}"
+  _err=$?
+  if [ ${_err} -gt 0 ]; then
+    echo "Error doing git fetch -f origin ${TARGET_BRANCH}:${TARGET_BRANCH}. Better check that"
+    exit ${_err}
+  fi
+
+  # fetch current branch
+  echo "git fetch "
+  git fetch 
+  _err=$?
+  if [ ${_err} -gt 0 ]; then
+    echo "Error doing git fetch. Better check that"
+    exit ${_err}
+  fi
+
+
+  # git rebase
+  echo "git rebase ${TARGET_BRANCH}"
+  git rebase "${TARGET_BRANCH}"
+
+  # set branch stream
+  echo 'git branch --set-upstream-to=origin/'"${_pull_current_branch}"'  '"${_pull_current_branch}"
+  git branch --set-upstream-to=origin/"${_pull_current_branch}"  "${_pull_current_branch}"
+
+
+  # push forced
+  echo "git push --force"
+  git push --force
+
+  # push upstream
+  echo "git push --set-upstream origin  ${_pull_current_branch}"
+  git push --set-upstream origin  "${_pull_current_branch}"
+
+  # push force again
+  echo "git push --force"
+  git push --force
+
+
+} # end disabled__older__line__by__line_todo_remove_TODO
+
 

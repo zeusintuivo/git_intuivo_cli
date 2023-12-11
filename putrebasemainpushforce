@@ -4,80 +4,184 @@
 #
 #
 
-# pull
-git fetch -f origin main:main &
-if [ ${?} -gt 0  ] ; then
-  echo "Error while fetch main.  Better check that "
-  exit 1
-fi
+function _perform_actions_putrebasemainpushforce
+  set -u
 
-
-# rubocop
-bundle exec rubocop -A 
-if [ ${?} -gt 0  ] ; then
+  # rubocop
   bundle exec rubocop -A 
-  if [ ${?} -eq 1  ] ; then
-    echo "Error fix first rubocop"
-    exit 1
+  _err=$?
+  if [ ${_err} -gt 0  ] ; then
+    bundle exec rubocop -A 
+    _err=$?
+    if [ ${_err} -gt 0  ] ; then
+      echo "Error fix first rubocop"
+      exit ${_err}
+    fi
   fi
-fi
-wait
+  wait
 
 
+  # get vars
+  local GIT_USER_NAME=""
+  GIT_USER_NAME="$(command git config user.name 2>&1)"
+  _err=$?
+  if [ ${_err} -gt 0  ] ; then
+    echo "Error getting user.name from git.  Better check that:${GIT_USER_NAME} "
+    exit ${_err}
+  fi
 
+  # fix this logic
+  # get if git logs for today to
+  # if today logs 
+  #  get lasttime
+  #  get current time
+  #  get difference = current - lasttime
+  # else
+  #  get difference = ""
 
-# get vars
-GIT_USER_NAME=$(command git config user.name 2> /dev/null)
-LASTTIME=$(echo $(git log --author="${GIT_USER_NAME}" --pretty=format:"%cd;  %h;  %s" | head -1 | cut -d\  -f4   2> /dev/null))
-# LASTTIME=$(git log --author="${GIT_USER_NAME}" --pretty=format:"%cd;  %h;  %s" | head -1 | cut -d\  -f4  2> /dev/null)
-CURRENTTIME="$(date +%H:%M)"
-TIME_TOOK=$(date "+%H:%M" -d "${LASTTIME}" 2>&1 )
-if [ ${?} -gt 0  ] ; then
+  # Get the last log time for the current branch and today
+  local LAST_LOG=""
+  LAST_LOG="$(git log --author="${GIT_USER_NAME}" --pretty=format:"%cd; %h; %s" --since="midnight" --branches="${CURRENT_BRANCH}" | head -1)"
+  _err=$?
+  if [ ${_err} -gt 0 ]; then
+    echo "Error getting last updated time from git log."
+    exit ${_err}
+  fi
+
+  # last updated log time , with echo it triggers git to exit and prompt vim view
+  local LASTTIME=""
+  LASTTIME="$(echo "$(git log --author="${GIT_USER_NAME}" --pretty=format:"%cd;  %h;  %s" | head -1 | cut -d\  -f4   2>&1 )")"
+  _err=$?
+  if [ ${_err} -gt 0  ] ; then
+    echo "Error getting last updated time from git log.  Better check that:${LASTTIME} "
+    exit ${_err}
+  fi
+
+  # LASTTIME=$(git log --author="${GIT_USER_NAME}" --pretty=format:"%cd;  %h;  %s" | head -1 | cut -d\  -f4  2> /dev/null)
+  local CURRENTTIME=""
+  CURRENTTIME="$(date +%H:%M)"
+  _err=$?
+  if [ ${_err} -gt 0  ] ; then
+    echo "Error getting date.  Better check that:${CURRENTTIME} "
+    exit ${_err}
+  fi
+
+  local TIME_TOOK=""
+  TIME_TOOK="$(date "+%H:%M" -d "${LASTTIME}" 2>&1 )"
+  _err=$?
+  if [ ${_err} -gt 0  ] ; then
+    echo "TIME_TOOK:${TIME_TOOK}"
+    echo "Error TIME_TOOK.  Better check that :${TIME_TOOK}"
+    #exit ${_err}
+  fi
+
+  if [[ -z "${TIME_TOOK:-}" ]] ; then
+    TIME_TOOK="${CURRENTTIME}"
+  fi
   echo "TIME_TOOK:${TIME_TOOK}"
 
-  echo "Error TIME_TOOK.  Better check that "
-  #exit 1
-fi
 
-PUSH_CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD);
-if [[ -z "${TIME_TOOK:-}" ]] ; then
-  TIME_TOOK="${CURRENTTIME}"
-fi
-echo "TIME_TOOK:${TIME_TOOK}"
+  # current branch
+  local PUSH_CURRENT_BRANCH=""
+  PUSH_CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD);
+  _err=$?
+  if [ ${_err} -gt 0  ] ; then
+    echo "Error getting current branch.  Better check that:${PUSH_CURRENT_BRANCH} "
+    exit ${_err}
+  fi
+
+  
+  # get ticket base on branch name
+  local TICKET=""
+  TICKET="$(cut -d- -f-2 <<< "${PUSH_CURRENT_BRANCH}")"
+  _err=$?
+  if [ ${_err} -gt 0  ] ; then
+    echo "Error getting ticket. Better check that: ${TICKET} "
+    exit ${_err}
+  fi
+  wait
+
+  # get number?
+  local -i NUMERIC=0
+  NUMERIC=$(cut -d- -f2 <<< "${PUSH_CURRENT_BRANCH}")
+  _err=$?
+  if [ ${_err} -gt 0  ] ; then
+    echo "Error getting ticket number. Better check that: ${NUMERIC} "
+    exit ${_err}
+  fi
+  wait
+
+  # check is number?
+  local -i NEW_VALUE=
+  NEW_VALUE=(( NUMERIC++ ))
+  _err=$?
+  if [ ${_err} -gt 0  ] ; then
+    echo "Error adding 1 to ${NUMERIC}. Better check that: ${NEW_VALUE} "
+    exit ${_err}
+  fi
+
+  if [ ${NEW_VALUE} -gt 0 ] && [ ${NEW_VALUE} -gt ${NUMERIC} ] ; then
+  {
+    echo -e "${LIGHTGREEN-} ✔ ${LIGHTYELLOW-} Number in ticket looks numeric"
+  }
+  else
+  {
+    echo "Error number:${NUMERIC} in ticket:${TICKET} in branch:${PUSH_CURRENT_BRANCH} does not look numeric "
+    exit 1
+  }
+  fi
 
 
 
 
 
-# put
-if [ ${#} -gt 0 ] ; then
-  put "180:00" "${*}"
-else
-  put "60:00" "Commiting and pushing generic push"
-fi
-if [ ${?} -gt 0  ] ; then
-  echo "Error doing put commit "
-  exit 1
-fi
-wait
+  # commit
+  if [ ${#} -gt 0 ] ; then
+    git commit -m "180:00" "${*}"
+    _err=$?
+  else
+    put "60:00" "Commiting and pushing generic push"
+    _err=$?
+  fi
+  if [ ${_err} -gt 0  ] ; then
+    echo "Error doing 'put' commit "
+    exit ${_err}
+  fi
+  wait
 
 
 
-# rebase
-git rebase origin/main
-if [ ${?} -gt 0  ] ; then
-  echo "Error doing rebase. Better check that "
-  exit 1
-fi
-wait
+  # put base branch 
+  local TARGETBRNACH=main
+  echo "git fetch -f origin ${TARGETBRNACH}:${TARGETBRNACH}"
+  local BASE_FETCH="$(git fetch -f origin "${TARGETBRNACH}":"${TARGETBRNACH}")"
+  _err=$?
+  if [ ${_err} -gt 0  ] ; then
+    echo "Error doing fetch to base branch. Better check that: ${BASE_FETCH} "
+    exit ${_err}
+  fi
+  wait
+
+  # rebase 
+  echo "git rebase ${TARGETBRNACH}"
+  local REBASED_MSG="$(git rebase "${TARGETBRNACH}")"
+  _err=$?
+  if [ ${_err} -gt 0  ] ; then
+    echo "Error doing rebase ${TARGETBRNACH}. Better check that: ${REBASED_MSG} "
+    exit ${_err}
+  fi
+  wait
 
 
 
 
-# push
-git push --set-upstream origin "${PUSH_CURRENT_BRANCH}" --force &
-if [ ${?} -gt 0  ] ; then
-  echo "Error push force Better check that "
-  exit 1
-fi
+  # push
+  git push --set-upstream origin "${PUSH_CURRENT_BRANCH}" --force &
+  git push --set-upstream origin "${PUSH_CURRENT_BRANCH}" --force &
+  if [ ${_err} -gt 0  ] ; then
+    echo "Error push force Better check that "
+    exit ${_err}
+  fi
+} # end _perform_actions_putrebasemainpushforce
 
+_perform_actions_putrebasemainpushforce ${*}
