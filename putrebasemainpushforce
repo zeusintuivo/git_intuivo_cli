@@ -1,12 +1,58 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # 
 # @author Zeus Intuivo <zeus@intuivo.com>
 #
 #
+set -eu
 
-function _perform_actions_putrebasemainpushforce
-  set -u
+journal_get_target_branch_against(){
+  # repated in journal_intuivo_cli/journal_get_target_branch_against journal_get_target_branch_against
+  # trap '{ echo -e "${PURPLE_BLUE}  + ${GRAY241} Branch ${_against} ${RED}NOT ${GRAY241}found "; return 130; }' ERR
+  local -i DEBUG=0
+  local _against="${1}"
+  (( DEBUG )) && echo -e "\njournal_get_target_branch_against${PURPLE_BLUE}  + ${GRAY241} Branch ${_against} found "
+  if [[ -n "${_against}" ]] && [ "$(echo $(git branch --list "${_against}"))" ] ; then
+  {
+    _against="${1}"
+  }
+  else
+  {
+    (( DEBUG )) && echo "exit"
+    return 1
+  }
+  fi
+  local BRANCH=$(git_current_branch)
+  local FILES1=$(git diff --name-only "${BRANCH}" $(git merge-base "${BRANCH}" "${_against}") | egrep "\.rb|\.rake")
+  local FILES2=$(git status -sb | egrep -v "^(\sD)" | egrep -v "shared/pids/puma.state" | egrep -v "^(\?\?\spublic/assets)" | egrep -v "##" | cut -c4- | egrep -v "commit_exception\.list|.rubocop_todo.yml|\.xls|\.lock|\.tutorial|\.dir_bash_history|\.vscode|\.idea|\.git|\.description|\.editorconfig|\.env.development|\.env-sample|\.gitignore|\.pryrc|\.rspec|\.ruby\-version|db/patch|bundles|\.rubocop_todo.yml|\.rubocop.yml|\.simplecov|\.temp_keys|\.csv|\.sh|\.bash|\.yml|\.gitignore|\.log|\.txt|\.key|\.crt|\.csr|\.idl|\.json|\.js|\.jpg|\.png|\.html|\.gif|\.feature|\.scss|\.css|\.haml|\.erb|\.otf|\.svg|\.ttf|\.tiff|\.woff|\.eot|\.editorconfig|\.markdown|\.headings")
+  local ONE_FILE="" FILES="" FILES_TMP=""
+  FILES_TMP="${FILES1}
+${FILES2}"
 
+  FILES_TMP=$(echo "${FILES_TMP}" | sort | uniq)
+  # // Only existing files - start
+  while read -r ONE_FILE; do
+  {
+    [[ -z "${ONE_FILE}" ]] && continue # skip empty
+    # echo "ONE_FILE::${ONE_FILE}::"
+    [[ "${ONE_FILE}" == "--observe" ]] && OBSERVE='yes' && continue
+    [[ -e "${ONE_FILE}" ]] || continue # skip non existent
+    FILES="${FILES}
+${ONE_FILE}"
+  }
+  done <<< "${FILES_TMP}"
+  # // Only existing files - end
+  echo "${FILES}"
+  return 0
+} # end journal_get_target_branch_against
+
+
+echo "$(journal_get_target_branch_against master)"
+echo "$(journal_get_target_branch_against main)"
+exit 0
+
+function _perform_actions_putrebasemainpushforce() {
+  local -i _err=0
+  
   # rubocop
   bundle exec rubocop -A 
   _err=$?
@@ -112,8 +158,8 @@ function _perform_actions_putrebasemainpushforce
   wait
 
   # check is number?
-  local -i NEW_VALUE=
-  NEW_VALUE=(( NUMERIC++ ))
+  local -i NEW_VALUE=0
+  NEW_VALUE=$(( NUMERIC++ ))
   _err=$?
   if [ ${_err} -gt 0  ] ; then
     echo "Error adding 1 to ${NUMERIC}. Better check that: ${NEW_VALUE} "

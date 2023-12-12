@@ -43,40 +43,89 @@ function _perform_rebase_push(){
     exit ${_err}
   fi
 
-# 1.description     # 2.local variable   # 3.action 
+# 1.description       # 2.local variable   # 3.action                                                         # 4.condition1   # 5.condition2  # 6.fallbackaction
   local _steps="
-# get parameter       |TARGET_BRANCH       |echo -n \"${1:-main}\"
-# pull current branch |_pull_current_branch|git rev-parse --abbrev-ref HEAD
-fetch target        |                    |git fetch -f origin \"${TARGET_BRANCH}\":\"${TARGET_BRANCH}\"
-fetch current branch|                    |git fetch 
-git rebase          |                    |git rebase \"${TARGET_BRANCH}\"
-set branch stream   |                    |git branch --set-upstream-to=origin/\"${_pull_current_branch}\"  \"${_pull_current_branch}\"
-push forced         |                    |git push --force
-push upstream       |                    |git push --set-upstream origin  \"${_pull_current_branch}\"
-push forced agaibn  |                    |git push --force
+# get parameter       |TARGET_BRANCH       |echo -n \"${1:-main}\"                                           |||
+# pull current branch |_pull_current_branch|git rev-parse --abbrev-ref HEAD                                  |||
+fetch target          |                    |git fetch -f origin \"${TARGET_BRANCH}\":\"${TARGET_BRANCH}\"    |||
+fetch current branch  |                    |git fetch                                                        |||
+git rebase            |                    |git rebase \"${TARGET_BRANCH}\"                                  |||
+set branch stream     |                    |git branch --set-upstream-to=origin/\"${_pull_current_branch}\"  \"${_pull_current_branch}\"|the requested upstream branch|does not exist|git push --set-upstream origin  \"${_pull_current_branch}\"
+push forced           |                    |git push --force                                                 |||
+push upstream         |                    |git push --set-upstream origin  \"${_pull_current_branch}\"      |||
+push forced agaibn    |                    |git push --force                                                 |||
 "
-  local _one _description _local_variable _msg _msg2 _action _failed
+  local _one _description _local_variable _msg _msg2 _action _failed _cond1 _cond1 _fallback
   while read -r _one ; do
   {
     [[ -z "${_one}" ]] && continue # skip ignored or empty lines
     _description="$(cut -d'|' -f1 <<<"${_one}")" 
     _local_variable="$(cut -d'|' -f2 <<<"${_one}" | xargs)" 
     _action="$(cut -d'|' -f3 <<<"${_one}")"
+    _cond1="$(cut -d'|' -f4 <<<"${_one}")"
+    _cond2="$(cut -d'|' -f5 <<<"${_one}")"
+    _fallback="$(cut -d'|' -f6 <<<"${_one}")"
     
     echo "${PURPLE-} # ${_description}  ${RESET-}"
     [[ -z "${_action}" ]] && continue  # skip no actions
     echo "${GRAY241-}   \____ ${YELLOW226-} ${_action}  ${RESET-}"
-    _msg="$(eval "${_action}")"
+    _msg="$(eval "${_action}" 2>&1)"
     _err=$?
     if [ ${_err} -gt 0 ]; then
     {
-      echo "$0 ${RED-} Error doing ${CYAN-}${_description}${PURPLE-}. Better check that: ${CYAN-}${_msg}${RESET-}"
-      exit ${_err}
+         echo "$0 ${RED-} Error doing ${CYAN-}${_description}${PURPLE-}. _fallback: if 1 ${PURPLE-} # ${_cond1} ${RESET-}  if 2 ${PURPLE-} # ${_cond2}  ${RESET-}: _err:${RED} ${_err} was:${CYAN-}${_msg}${RESET-} "
+         echo "${GRAY241-}   \____ ${YELLOW226-} ${_fallback}  ${RESET-}"
+      if [[ -n "${_cond1}" ]] && [[ -n "${_cond2}" ]] && [[ "${_msg}" == *"${_cond1}"* ]] && [[ "${_msg}" == *"${_cond2}"* ]] ; then
+      {
+         echo "$0 ${RED-} Error doing ${CYAN-}${_description}${PURPLE-}. _fallback: if 1 ${PURPLE-} # ${_cond1} ${RESET-}  if 2 ${PURPLE-} # ${_cond2}  ${RESET-}: _err:${RED} ${_err} was:${CYAN-}${_msg}${RESET-} "
+         echo "${GRAY241-}   \____ ${YELLOW226-} ${_fallback}  ${RESET-}"
+        _msg="$(eval "${_fallback}" 2>&1)"
+        _err=$?
+        if [ ${_err} -gt 0 ]; then
+        {
+          echo "$0 ${RED-} Error doing fallback 1 & 2 ${CYAN-}${_description}${PURPLE-}. Better check that: ${CYAN-}${_msg}${RESET-}"      
+          exit ${_err}
+        }
+        fi
+      }
+      elif [[ -n "${_cond1}" ]] && [[ "${_msg}" == *"${_cond1}"* ]] ; then
+      {
+         echo "$0 ${RED-} Error doing ${CYAN-}${_description}${PURPLE-}. _fallback: if 1 ${PURPLE-} # ${_cond1} ${RESET-}: _err:${RED} ${_err} was:${CYAN-}${_msg}${RESET-} "
+         echo "${GRAY241-}   \____ ${YELLOW226-} ${_fallback}  ${RESET-}"
+        _msg="$(eval "${_fallback}")"
+        _err=$?
+        if [ ${_err} -gt 0 ]; then
+        {
+          echo "$0 ${RED-} Error doing fallback 1 ${CYAN-}${_description}${PURPLE-}. Better check that: ${CYAN-}${_msg}${RESET-}"      
+          exit ${_err}
+        }
+        fi
+
+      } 
+      elif ( [[ -n "${_cond2}" ]] && [[ "${_msg}" == *"${_cond2}"* ]] ); then
+      {
+         echo "$0 ${RED-} Error doing ${CYAN-}${_description}${PURPLE-}. _fallback: if 2 ${PURPLE-} # ${_cond2} ${RESET-}: _err:${RED} ${_err} was:${CYAN-}${_msg}${RESET-} "
+         echo "${GRAY241-}   \____ ${YELLOW226-} ${_fallback}  ${RESET-}"
+        _msg="$(eval "${_fallback}")"
+        _err=$?
+        if [ ${_err} -gt 0 ]; then
+        {
+          echo "$0 ${RED-} Error doing fallback 2 ${CYAN-}${_description}${PURPLE-}. Better check that: ${CYAN-}${_msg}${RESET-}"      
+          exit ${_err}
+        }
+        fi
+      }
+      else
+      {
+        echo "$0 ${RED-} Error doing ${CYAN-}${_description}${PURPLE-}. Better check that: ${CYAN-}${_msg}${RESET-}"      
+        exit ${_err}
+      }
+      fi
     }
     fi
 
     [[ -z "${_local_variable}" ]] && continue  # skip if no variable target provided or empty lines
-    _msg2="$(eval "local ${_local_variable}=\"${_msg}\"")"
+    _msg2="$(eval "local ${_local_variable}=\"${_msg}\"" 2>&1)"
     _err=$?
     if [ ${_err} -gt 0 ]; then
     {
@@ -139,6 +188,7 @@ function disabled__older__line__by__line_todo_remove_TODO(){
 
   # set branch stream
   echo 'git branch --set-upstream-to=origin/'"${_pull_current_branch}"'  '"${_pull_current_branch}"
+
   git branch --set-upstream-to=origin/"${_pull_current_branch}"  "${_pull_current_branch}"
 
 
