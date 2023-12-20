@@ -241,6 +241,11 @@ if [[ -z "${JOURNAL_HOME:-}" ]] ; then
   JOURNAL_HOME="\$(realpath \$(pwd)/../)"      # updated realpath macos 20210902
 }
 fi
+if [[ -z "${JOURNAL_REAL_FOLDER:-}" ]] ; then
+{
+  JOURNAL_REAL_FOLDER="$(realpath $(pwd)/../)"      # / journal folder will be added
+}
+fi
 
 if [[ -z "${ISSUETRACKERLOCATION:-}" ]] ; then
 {
@@ -279,7 +284,7 @@ fi
 export JOURNAL_PUT_COMMIT_METHOD="${JOURNAL_PUT_COMMIT_METHOD:-}"    #   "can only be 'put' or 'commit'. PUT makes a direct add and push and COMMIT just commits without pushing "
 # export JOURNAL_HOME="\${HOME:-}/_" #  /journal folder  will be added
 # export JOURNAL_HOME="\$(realpath \$(pwd)/../)" # updated realpath macos 20210902 #  /journal folder  will be added   # updated realpath macos 20210902
-export JOURNAL_HOME="${JOURNAL_HOME:-}"   #   /journal folder will be added
+export JOURNAL_HOME="${JOURNAL_REAL_FOLDER:-}"   #   /journal folder will be added
 
 # journal section - Custom ISSUETRACKERLOCATION - journal_get_description_work_link_url script worker dependency
 # [[ -n "\${TICKETID:-}" ]] && export ISSUETRACKERLOCATION=\$(echo "https://pm.company.net/jira/browse/HTMLEDITOR-\${TICKETID:-}")   # Sample we can use TICKETID available inside journal_intuivo_cli
