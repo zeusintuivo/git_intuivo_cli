@@ -49,7 +49,7 @@ function _rebase_push_pending_work(){
   local _list=""
   _list="$(<.rebasepushpending_list)"
   _err=$?
-  if [ ${_err} -gt 0 ] || [ -z "${_list}" ] ; then 
+  if [ ${_err} -gt 0 ] || [ -z "${_list}" ] ; then
   {
     echo -e "${RED} ERROR - ${YELLOW220} There was an error trying to switch branch ${RESET}"
     echo -e "${PURPLE_BLUE}  + output of \$_list             ${GRAY241}:${YELLOW226}${_list}${RESET}"
@@ -126,7 +126,7 @@ ${PURPLE_BLUE}|${RED}@${PURPLE_BLUE}|${GRAY241-}${_one}${PURPLE_BLUE}|${YELLOW22
   {
     echo -e "${RED} ERROR - ${YELLOW220} The following branches failed ${RESET}"
     echo -e "${PURPLE_BLUE}  + output of \$_failed  ${RESET}"
-    echo "${_failed}"
+    echo -e "${_failed}"
     exit 1
   }
   fi
