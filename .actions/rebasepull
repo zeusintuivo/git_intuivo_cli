@@ -1,0 +1,19 @@
+# 1.description       # 2.local variable   # 3.action                                                                                   # 4.condition1      # 5.or condition2  # 6.fallbackaction
+# get parameter       |TARGET_BRANCH       |echo -n \\"${1:-main}\\"                                                                      |                       |              |
+# pull current branch |_pull_current_branch|git rev-parse --abbrev-ref HEAD                                                             |                        |              |
+fetch target          |                    |git fetch -f origin "TARGET_BRANCH":"TARGET_BRANCH"                               |                         |              |
+fetch current branch  |                    |git fetch                                                                                   |                          |              |
+git rebase            |                    |git rebase "TARGET_BRANCH"                                                             |                           |              |
+set branch stream     |                    |git branch --set-upstream-to=origin/"_pull_current_branch"  "_pull_current_branch"|the requested upstream branch|does not exist|git push --set-upstream origin  "_pull_current_branch"
+push forced           |                    |git push --force                                                                            |                          |               |
+push upstream         |                    |git push --set-upstream origin  "_pull_current_branch"                                 |                          |               |
+push forced again     |                    |git push --force                                                                            |                          |               |
+bundle install        |                    |bundle install                                                                              |                          |               |
+bundle migrate        |                    |bundle exec rails db:migrate db:migrate:with_data                                           |                          |               |
+reset data_schema     |                    |git checkout db/data_schema.rb                                                              |                          |               |
+reset schema          |                    |git checkout db/schema.rb                                                                   |                          |               |
+reset all files       |                    |./.actions/checkout_reset_all_changed_after_bundle_and_migrate                              |                          |               |
+status -sb            |                    |git status -sb                                                                              |                          |               |
+return to branch      |                    |git checkout "_pull_current_branch"                                                         |                          |               |
+ 
+
