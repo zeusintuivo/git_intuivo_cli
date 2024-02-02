@@ -60,7 +60,7 @@ git checkout db/data_schema.rb  |          |git checkout db/data_schema.rb      
 git checkout db/schema.rb  |               |git checkout db/schema.rb                                  |||
 "
    _steps="${__default_steps}"
-  [[ -e .actions/rebasepull ]] && _steps="$(<.actions/rebasepull)"
+  [[ -e .actions/rebasepull ]] && _steps="$(<.actions/rebasepush)"
   [[ -e .actions/rebasepull ]] && _steps="$(sed 's/TARGET_BRANCH/'${TARGET_BRANCH}'/g' <<< "${_steps}" | sed 's/_pull_current_branch/'${_pull_current_branch}'/g')"
   # (( DEBUG:- )) && echo -e "${_steps}"
   # (( DEBUG:- )) && exit 0
