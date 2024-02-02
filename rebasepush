@@ -2,7 +2,7 @@
 set -u
 
 if ! declare -A test_array > /dev/null 2>&1; then
-  echo "TIP: Associative arrays are supported (Bash 4.0 and above) only"
+  echo -e "TIP: Associative arrays are supported (Bash 4.0 and above) only"
 fi
 
 function load_global_colors(){
@@ -30,16 +30,16 @@ function _perform_rebase_push(){
   local TARGET_BRANCH="${1:-main}"
   _err=$?
   if [ ${_err} -gt 0 ]; then
-    echo "Error getting TARGET_BRANCH parameter. Better check that: $0 ${*}"
+    echo -e "Error getting TARGET_BRANCH parameter. Better check that: $0 ${*}"
     exit ${_err}
   fi
-  echo "${PURPLE-} # TARGET_BRANCH${PURPLE_BLUE-}:${RED-}${TARGET_BRANCH}${RESET-}"
+  echo -e "${PURPLE-} # TARGET_BRANCH${PURPLE_BLUE-}:${RED-}${TARGET_BRANCH}${RESET-}"
 
   # pull current branch
   local _pull_current_branch="$(git rev-parse --abbrev-ref HEAD 2>&1)";
   _err=$?
   if [ ${_err} -gt 0 ]; then
-    echo "Error getting _pull_current_branch. Better check that: ${_pull_current_branch}"
+    echo -e "Error getting _pull_current_branch. Better check that: ${_pull_current_branch}"
     exit ${_err}
   fi
 
@@ -62,7 +62,7 @@ git checkout db/schema.rb  |               |git checkout db/schema.rb           
    _steps="${__default_steps}"
   [[ -e .actions/rebasepull ]] && _steps="$(<.actions/rebasepull)"
   [[ -e .actions/rebasepull ]] && _steps="$(sed 's/TARGET_BRANCH/'${TARGET_BRANCH}'/g' <<< "${_steps}" | sed 's/_pull_current_branch/'${_pull_current_branch}'/g')"
-  # (( DEBUG:- )) && echo "${_steps}"
+  # (( DEBUG:- )) && echo -e "${_steps}"
   # (( DEBUG:- )) && exit 0
   local _one _description _local_variable _msg _msg2 _action _failed _cond1 _cond1 _fallback
   while read -r _one ; do
@@ -75,37 +75,37 @@ git checkout db/schema.rb  |               |git checkout db/schema.rb           
     _cond2="$(cut -d'|' -f5 <<<"${_one}")"
     _fallback="$(cut -d'|' -f6 <<<"${_one}")"
 
-    echo "${PURPLE-} # ${_description}  ${RESET-}"
+    echo -e "${PURPLE-} # ${_description}  ${RESET-}"
     [[ -z "${_action}" ]] && continue  # skip no actions
-    echo "${GRAY241-}   \____ ${YELLOW226-} ${_action}  ${RESET-}"
+    echo -e "${GRAY241-}   \____ ${YELLOW226-} ${_action}  ${RESET-}"
     _msg="$(eval "${_action}" 2>&1)"
     _err=$?
     if [ ${_err} -gt 0 ]; then
     {
-         echo "$0 ${RED-} Error doing ${CYAN-}${_description}${PURPLE-}. _fallback: if 1 ${PURPLE-} # ${_cond1} ${RESET-}  if 2 ${PURPLE-} # ${_cond2}  ${RESET-}: _err:${RED} ${_err} was:${CYAN-}${_msg}${RESET-} "
-         echo "${GRAY241-}   \____ ${YELLOW226-} ${_fallback}  ${RESET-}"
+         echo -e "$0 ${RED-} Error doing ${CYAN-}${_description}${PURPLE-}. _fallback: if 1 ${PURPLE-} # ${_cond1} ${RESET-}  if 2 ${PURPLE-} # ${_cond2}  ${RESET-}: _err:${RED} ${_err} was:${CYAN-}${_msg}${RESET-} "
+         echo -e "${GRAY241-}   \____ ${YELLOW226-} ${_fallback}  ${RESET-}"
       if [[ -n "${_cond1}" ]] && [[ -n "${_cond2}" ]] && [[ "${_msg}" == *"${_cond1}"* ]] && [[ "${_msg}" == *"${_cond2}"* ]] ; then
       {
-         echo "$0 ${RED-} Error doing ${CYAN-}${_description}${PURPLE-}. _fallback: if 1 ${PURPLE-} # ${_cond1} ${RESET-}  if 2 ${PURPLE-} # ${_cond2}  ${RESET-}: _err:${RED} ${_err} was:${CYAN-}${_msg}${RESET-} "
-         echo "${GRAY241-}   \____ ${YELLOW226-} ${_fallback}  ${RESET-}"
+         echo -e "$0 ${RED-} Error doing ${CYAN-}${_description}${PURPLE-}. _fallback: if 1 ${PURPLE-} # ${_cond1} ${RESET-}  if 2 ${PURPLE-} # ${_cond2}  ${RESET-}: _err:${RED} ${_err} was:${CYAN-}${_msg}${RESET-} "
+         echo -e "${GRAY241-}   \____ ${YELLOW226-} ${_fallback}  ${RESET-}"
         _msg="$(eval "${_fallback}" 2>&1)"
         _err=$?
         if [ ${_err} -gt 0 ]; then
         {
-          echo "$0 ${RED-} Error doing fallback 1 & 2 ${CYAN-}${_description}${PURPLE-}. Better check that: ${CYAN-}${_msg}${RESET-}"
+          echo -e "$0 ${RED-} Error doing fallback 1 & 2 ${CYAN-}${_description}${PURPLE-}. Better check that: ${CYAN-}${_msg}${RESET-}"
           exit ${_err}
         }
         fi
       }
       elif [[ -n "${_cond1}" ]] && [[ "${_msg}" == *"${_cond1}"* ]] ; then
       {
-         echo "$0 ${RED-} Error doing ${CYAN-}${_description}${PURPLE-}. _fallback: if 1 ${PURPLE-} # ${_cond1} ${RESET-}: _err:${RED} ${_err} was:${CYAN-}${_msg}${RESET-} "
-         echo "${GRAY241-}   \____ ${YELLOW226-} ${_fallback}  ${RESET-}"
+         echo -e "$0 ${RED-} Error doing ${CYAN-}${_description}${PURPLE-}. _fallback: if 1 ${PURPLE-} # ${_cond1} ${RESET-}: _err:${RED} ${_err} was:${CYAN-}${_msg}${RESET-} "
+         echo -e "${GRAY241-}   \____ ${YELLOW226-} ${_fallback}  ${RESET-}"
         _msg="$(eval "${_fallback}")"
         _err=$?
         if [ ${_err} -gt 0 ]; then
         {
-          echo "$0 ${RED-} Error doing fallback 1 ${CYAN-}${_description}${PURPLE-}. Better check that: ${CYAN-}${_msg}${RESET-}"
+          echo -e "$0 ${RED-} Error doing fallback 1 ${CYAN-}${_description}${PURPLE-}. Better check that: ${CYAN-}${_msg}${RESET-}"
           exit ${_err}
         }
         fi
@@ -113,20 +113,20 @@ git checkout db/schema.rb  |               |git checkout db/schema.rb           
       }
       elif ( [[ -n "${_cond2}" ]] && [[ "${_msg}" == *"${_cond2}"* ]] ); then
       {
-         echo "$0 ${RED-} Error doing ${CYAN-}${_description}${PURPLE-}. _fallback: if 2 ${PURPLE-} # ${_cond2} ${RESET-}: _err:${RED} ${_err} was:${CYAN-}${_msg}${RESET-} "
-         echo "${GRAY241-}   \____ ${YELLOW226-} ${_fallback}  ${RESET-}"
+         echo -e "$0 ${RED-} Error doing ${CYAN-}${_description}${PURPLE-}. _fallback: if 2 ${PURPLE-} # ${_cond2} ${RESET-}: _err:${RED} ${_err} was:${CYAN-}${_msg}${RESET-} "
+         echo -e "${GRAY241-}   \____ ${YELLOW226-} ${_fallback}  ${RESET-}"
         _msg="$(eval "${_fallback}")"
         _err=$?
         if [ ${_err} -gt 0 ]; then
         {
-          echo "$0 ${RED-} Error doing fallback 2 ${CYAN-}${_description}${PURPLE-}. Better check that: ${CYAN-}${_msg}${RESET-}"
+          echo -e "$0 ${RED-} Error doing fallback 2 ${CYAN-}${_description}${PURPLE-}. Better check that: ${CYAN-}${_msg}${RESET-}"
           exit ${_err}
         }
         fi
       }
       else
       {
-        echo "$0 ${RED-} Error doing ${CYAN-}${_description}${PURPLE-}. Better check that: ${CYAN-}${_msg}${RESET-}"
+        echo -e "$0 ${RED-} Error doing ${CYAN-}${_description}${PURPLE-}. Better check that: ${CYAN-}${_msg}${RESET-}"
         exit ${_err}
       }
       fi
@@ -138,7 +138,7 @@ git checkout db/schema.rb  |               |git checkout db/schema.rb           
     _err=$?
     if [ ${_err} -gt 0 ]; then
     {
-      echo "$0 ${RED-} Assigning value to _local_variable:${CYAN-}${_local_variable}${RED-}  = ${YELLOW226-}value :${CYAN-}${_msg}: ${PURPLE-}. Better check that: ${CYAN-}${_msg2}${RESET-}"
+      echo -e "$0 ${RED-} Assigning value to _local_variable:${CYAN-}${_local_variable}${RED-}  = ${YELLOW226-}value :${CYAN-}${_msg}: ${PURPLE-}. Better check that: ${CYAN-}${_msg2}${RESET-}"
       exit ${_err}
     }
     fi
@@ -158,59 +158,59 @@ function disabled__older__line__by__line_todo_remove_TODO(){
   local TARGET_BRANCH="${1:-main}"
   _err=$?
   if [ ${_err} -gt 0 ]; then
-    echo "Error getting TARGET_BRANCH parameter. Better check that: $0 ${*}"
+    echo -e "Error getting TARGET_BRANCH parameter. Better check that: $0 ${*}"
     exit ${_err}
   fi
-  echo "TARGET_BRANCH:${TARGET_BRANCH}"
+  echo -e "TARGET_BRANCH:${TARGET_BRANCH}"
 
 
   # pull current branch
   local _pull_current_branch="$(git rev-parse --abbrev-ref HEAD 2>&1)";
   _err=$?
   if [ ${_err} -gt 0 ]; then
-    echo "Error getting _pull_current_branch. Better check that: ${_pull_current_branch}"
+    echo -e "Error getting _pull_current_branch. Better check that: ${_pull_current_branch}"
     exit ${_err}
   fi
 
   # fetch target
-  echo "git fetch -f origin ${TARGET_BRANCH}:${TARGET_BRANCH}"
+  echo -e "git fetch -f origin ${TARGET_BRANCH}:${TARGET_BRANCH}"
   git fetch -f origin "${TARGET_BRANCH}":"${TARGET_BRANCH}"
   _err=$?
   if [ ${_err} -gt 0 ]; then
-    echo "Error doing git fetch -f origin ${TARGET_BRANCH}:${TARGET_BRANCH}. Better check that"
+    echo -e "Error doing git fetch -f origin ${TARGET_BRANCH}:${TARGET_BRANCH}. Better check that"
     exit ${_err}
   fi
 
   # fetch current branch
-  echo "git fetch "
+  echo -e "git fetch "
   git fetch
   _err=$?
   if [ ${_err} -gt 0 ]; then
-    echo "Error doing git fetch. Better check that"
+    echo -e "Error doing git fetch. Better check that"
     exit ${_err}
   fi
 
 
   # git rebase
-  echo "git rebase ${TARGET_BRANCH}"
+  echo -e "git rebase ${TARGET_BRANCH}"
   git rebase "${TARGET_BRANCH}"
 
   # set branch stream
-  echo 'git branch --set-upstream-to=origin/'"${_pull_current_branch}"'  '"${_pull_current_branch}"
+  echo -e 'git branch --set-upstream-to=origin/'"${_pull_current_branch}"'  '"${_pull_current_branch}"
 
   git branch --set-upstream-to=origin/"${_pull_current_branch}"  "${_pull_current_branch}"
 
 
   # push forced
-  echo "git push --force"
+  echo -e "git push --force"
   git push --force
 
   # push upstream
-  echo "git push --set-upstream origin  ${_pull_current_branch}"
+  echo -e "git push --set-upstream origin  ${_pull_current_branch}"
   git push --set-upstream origin  "${_pull_current_branch}"
 
   # push force again
-  echo "git push --force"
+  echo -e "git push --force"
   git push --force
 
 
