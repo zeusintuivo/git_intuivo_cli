@@ -124,7 +124,7 @@ export ACTION=`basename "$0"`
     # nothing here
     #put "${ACTION} $*" ;
     sshswitchkey_and_commit_here "$*"
-    
+
   elif [[ "$(expr substr $(uname -s) 1 10)" == "MINGW64_NT" ]] ; then
     # Do something under Windows NT platform
     # nothing here
