@@ -6,7 +6,7 @@
 # echo "${$(git status)#* by }" | head -1
 gray242="\\033[38;5;242m"
 
-repeat_single_char_spacer() {
+repeat_single_char_spacer(){
   # Sample usage:
   #               LONGEST_NAME=$(get_longest_name_length "${LIST_OF_FILENAMES_OR_STRINGS}")
   #               FILENAME_LENGTH="${#FILENAME}"   # get string length
@@ -17,9 +17,9 @@ repeat_single_char_spacer() {
     #echo "${1}"
     printf %s "${1}"
   done
-}
+} # end repeat_single_char_spacer
 
-get_longest_name_length() {
+get_longest_name_length(){
   # Sample usage:
   #               LONGEST_NAME=$(get_longest_name_length "${LIST_OF_FILENAMES_OR_STRINGS}")
   local ONE_CHANGED_FILES_WITH_STATUS
@@ -39,9 +39,9 @@ get_longest_name_length() {
   }
   done <<< "${CHANGED_FILES_WITH_STATUS_WITH_TAB_CHANGED_TO_PIPE}"
   echo $(( $LONGEST_NAME + 1 ))
-}
+} # end get_longest_name_length
 
-function cut_file_contents_from_to() {
+function cut_file_contents_from_to(){
 	# Sample use:
 	#  cut_file_contents_from_to "# If you come" "Example aliases" ~/.zshrc
 	# REF: https://unix.stackexchange.com/questions/243207/how-can-i-delete-everything-until-a-pattern-and-everything-after-another-pattern
@@ -54,9 +54,9 @@ function cut_file_contents_from_to() {
 	a="$(cat ${filename})";
 	a="$(echo "${a#*"$from1"}")";
 	echo "$from1${a%%"$to2"*}$to2"
-} # end function
+} # end cut_file_contents_from_to
 
-branch_ahead_and_or_behind() {
+branch_ahead_and_or_behind(){
   #!/bin/bash
   # by http://github.com/jehiah
   # this prints out some branch status (similar to the '... ahead' info you get from git status)
@@ -78,17 +78,17 @@ branch_ahead_and_or_behind() {
       RIGHT_AHEAD=$(grep -c '^>' /tmp/git_upstream_status_delta)
       echo "$local_branch (ahead $LEFT_AHEAD) | (behind $RIGHT_AHEAD) $remote_branch"
   done
-}
+} # end branch_ahead_and_or_behind
 # @Overwrite of $HOME/.oh-my-zsh/lib/git.zsh
 # Outputs current branch info in prompt format
-function git_prompt_info() {
+function git_prompt_info(){
   local ref
   if [[ "$(command git config --get oh-my-zsh.hide-status 2>/dev/null)" != "1" ]]; then
     ref=$(command git symbolic-ref HEAD 2> /dev/null) || \
     ref=$(command git rev-parse --short HEAD 2> /dev/null) || return 0
     echo "$ZSH_THEME_GIT_PROMPT_PREFIX${ref#refs/heads/}$(parse_git_dirty)$ZSH_THEME_GIT_PROMPT_SUFFIX"
   fi
-} # end function
+} # end git_prompt_info
 
 GET_ZSHRC_WITH_PARTIALY=$(cut_file_contents_from_to "# If you come" "Example aliases" ~/.zshrc)
 eval "${GET_ZSHRC_WITH_PARTIALY}"
@@ -116,7 +116,7 @@ while read -r ONE_SUBDIR; do
 		# conversion to bash
 		this_prompt=$(# @Overwrite of $HOME/.oh-my-zsh/lib/git.zsh
 # Outputs current branch info in prompt format
-function git_prompt_info() {
+function git_prompt_info(){
   local ref
   if [[ "$(command git config --get oh-my-zsh.hide-status 2>/dev/null)" != "1" ]]; then
     ref=$(command git symbolic-ref HEAD 2> /dev/null) || \
@@ -126,7 +126,7 @@ function git_prompt_info() {
 };git_prompt_info)
 		this_ex=$(# @Overwrite of $HOME/.oh-my-zsh/lib/git.zsh
 # Outputs current branch info in prompt format
-function git_prompt_info() {
+function git_prompt_info(){
   local ref
   if [[ "$(command git config --get oh-my-zsh.hide-status 2>/dev/null)" != "1" ]]; then
     ref=$(command git symbolic-ref HEAD 2> /dev/null) || \
@@ -136,7 +136,7 @@ function git_prompt_info() {
 };git_prompt_info)
 
     this_ahead=$( # @Overwrite of https://stackoverflow.com/questions/7773939/show-git-ahead-and-behind-info-for-all-branches-including-remote_branchs
-branch_ahead_and_or_behind() {
+branch_ahead_and_or_behind(){
   #!/bin/bash
   # by http://github.com/jehiah
   # this prints out some branch status (similar to the '... ahead' info you get from git status)
@@ -163,7 +163,7 @@ branch_ahead_and_or_behind() {
   done
 };branch_ahead_and_or_behind)
   this_spacer=$(
-repeat_single_char_spacer() {
+repeat_single_char_spacer(){
   local this_filename_length this_calculate_spacer
   #this_directory_name_only=${PWD##*/}
   this_filename_length="${#ONE_SUBDIR}"
