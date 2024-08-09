@@ -122,7 +122,7 @@ function _perform_rebase_push(){
 66||brew install libxscrnsaver libnotify bzip2 freetype2 ||||.fed37_step_66_brew_installs
 "
    _steps="${__default_steps}"
-  [[ -e .actions/rebasepull ]] && _steps="$(<"${_target_file_source}")"
+  [[ -e  "${_target_file_source}" ]] && _steps="$(<"${_target_file_source}")"
   # [[ -e .actions/rebasepull ]] && _steps="$(sed 's/TARGET_BRANCH/'${TARGET_BRANCH}'/g' <<< "${_steps}" | sed 's/_pull_current_branch/'${_pull_current_branch}'/g')"
   # (( DEBUG:- )) && echo -e "${_steps}"
   # (( DEBUG:- )) && exit 0
