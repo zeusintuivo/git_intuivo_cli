@@ -103,25 +103,23 @@ function _perform_rebase_push(){
 47||sudo dnf install https://rpms.remirepo.net/fedora/remi-release-$(rpm -E %fedora).rpm -yv  ||||.fed37_step_47_remi
 48||sudo dnf build-dep yakuake -y    |       |       |            |.fed37_step_48_build_yakuake
 49||sudo dnf build-dep guake -y    |       |       |            |.fed37_step_49_build_guake
-50||install_requirements linux '
-    arandr
-    task
-    gparted
-    gpart
-    thunderbird
-    boxes
-    firefox
-    guake
-    yakuake
-    nginx
-    gnome-tweaks
-    breeze-cursor-theme
-    oxygen-cursor-themes
-    knock
-    htop
-    btop
-  '|       |       |            |.fed37_step_50_intall_redqs
-51||brew install libxscrnsaver libnotify bzip2 freetype2 ||||.fed37_step_51_brew_installs
+50||sudo dnf install -y arandr                ||||.fed37_step_50_arandr
+51||sudo dnf install -y task                  ||||.fed37_step_51_task
+52||sudo dnf install -y gparted               ||||.fed37_step_52_gparted
+53||sudo dnf install -y gpart                 ||||.fed37_step_53_gpart
+54||sudo dnf install -y thunderbird           ||||.fed37_step_54_thunderbird
+55||sudo dnf install -y boxes                 ||||.fed37_step_55_boxes
+56||sudo dnf install -y firefox               ||||.fed37_step_56_firefox
+57||sudo dnf install -y guake                 ||||.fed37_step_57_guake
+58||sudo dnf install -y yakuake               ||||.fed37_step_58_yakuake
+59||sudo dnf install -y nginx                 ||||.fed37_step_59_nginx
+60||sudo dnf install -y gnome-tweaks          ||||.fed37_step_60_gnome
+61||sudo dnf install -y breeze-cursor-theme   ||||.fed37_step_61_breeze
+62||sudo dnf install -y oxygen-cursor-themes  ||||.fed37_step_62_oxygen
+63||sudo dnf install -y knock                 ||||.fed37_step_63_knock
+64||sudo dnf install -y htop                  ||||.fed37_step_64_htop
+65||sudo dnf install -y btop                  ||||.fed37_step_65_btop
+66||brew install libxscrnsaver libnotify bzip2 freetype2 ||||.fed37_step_66_brew_installs
 "
    _steps="${__default_steps}"
   [[ -e .actions/rebasepull ]] && _steps="$(<"${_target_file_source}")"
