@@ -68,7 +68,7 @@
     cd \"${_subdir}/{#}\"
     "
     # subdir_out="$(
-      .pullsubdirs "${_subdir}" "${_actions}"
+      .pullsubdirs "${_subdir}" "${_actions}" &
       # )"
     # echo "${subdir_out}"
   }
@@ -87,6 +87,6 @@ pwd
 [[ -d .git/ ]] && pull
 "
 
-.pullsubdirs  "${CURDIR}" "${ACTIONS}"
+.pullsubdirs  "${CURDIR}" "${ACTIONS}" &
 
 
