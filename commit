@@ -1321,7 +1321,7 @@ do_unstage_here(){
   local UNSTAGE_THIS_FILE
   local EXCEPTION_LIST
   local try_FILENAME="${*}" # Grab every thing as one filename to include spaces
-  if [[ "$(uname)" == "Darwin" ]] || [[ "$(expr substr $(uname -s) 1 5)" == "Linux" ]] ; then
+  if [[ "$(uname)" == "Darwin" ]] || [[ "$(cut -c1-5 <<< "$(uname -s)")" == "Linux" ]] ; then
   {
     # Do something under Mac OS X platform
     EXCEPTION_LIST="$(<commit_exception.list)"
@@ -1345,7 +1345,7 @@ do_unstage_here(){
     }
     done <<< "${EXCEPTION_LIST}"
   }
-  elif [[ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]] ; then
+  elif [[ "$(cut -c1-10 <<< "$(uname -s)")" == "MINGW32_NT" ]] ; then
   {
     # Do something under Windows NT platform
     echo "PENDING WINDOWS IMPLEMENTATION is_in_commit_exception_list()";
@@ -1366,12 +1366,12 @@ is_in_commit_exception_list(){
       # Do something under Mac OS X platform
       do_unstage_here "${*}" ;
     }
-    elif [[ "$(expr substr $(uname -s) 1 5)" == "Linux" ]] ; then
+    elif [[ "$(cut -c1-5 <<< "$(uname -s)")" == "Linux" ]] ; then
     {
       # Do something under GNU/Linux platform
       do_unstage_here "${*}" ;
     }
-    elif [[ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]] ; then
+    elif [[ "$(cut -c1-10 <<< "$(uname -s)")" == "MINGW32_NT" ]] ; then
     {
       # Do something under Windows NT platform
       do_unstage_here "${*}" ;

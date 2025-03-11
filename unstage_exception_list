@@ -11,7 +11,7 @@
 
 # check operation systems
 (
-  if [[ "$(uname)" == "Darwin" ]] || [[ "$(expr substr $(uname -s) 1 5)" == "Linux" ]] ; then
+  if [[ "$(uname)" == "Darwin" ]] || [[ "$(cut -c1-5 <<< "$(uname -s)")" == "Linux" ]] ; then
   {
     # Do something under Mac OS X platform
 
@@ -37,7 +37,7 @@
     }
     done <<< "${EXCEPTION_LIST}"
   }
-  elif [[ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]] ; then
+  elif [[ "$(cut -c1-10 <<< "$(uname -s)")" == "MINGW32_NT" ]] ; then
   {
     # Do something under Windows NT platform
     echo "PENDING WINDOWS IMPLEMENTATION";

@@ -297,11 +297,11 @@ add_result=$(git add -A 2>&1 )  # Check and catch capture all stout sdout output
         # Do something under Mac OS X platform
         unstage_exception_list ;
 
-      elif [[ "$(expr substr $(uname -s) 1 5)" == "Linux" ]] ; then
+      elif [[ "$(cut -c1-5 <<< "$(uname -s)")" == "Linux" ]] ; then
         # Do something under GNU/Linux platform
         unstage_exception_list ;
 
-      elif [[ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]] ; then
+      elif [[ "$(cut -c1-10 <<< "$(uname -s)")" == "MINGW32_NT" ]] ; then
         # Do something under Windows NT platform
         unstage_exception_list ;
         # nothing here
