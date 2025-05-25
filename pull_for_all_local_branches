@@ -20,7 +20,7 @@
       # echo -e "${one_action}"
       action="${one_action/\{\}/$one_item}"  # replace value inside string substitution expresion bash
       echo -e "${action}"
-      eval ${action}
+      eval "${action}"
       #
     }
     done <<< "${local_actions}"
@@ -36,4 +36,3 @@ ACTIONS="git checkout {}
 pull
 "
 .each  "${ACTIONS}" "${ALL_LOCAL_BRANCHES_BRANCHES}"
-
