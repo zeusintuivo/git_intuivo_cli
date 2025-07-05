@@ -114,18 +114,18 @@ export ACTION=`basename "$0"`
     #put "${ACTION} $*" ;
     sshswitchkey_and_commit_here "$*"
 
-  elif [[ "$(expr substr $(uname -s) 1 5)" == "Linux" ]] ; then
+  elif [[ "$(cut -c1-5 <<< "$(uname -s)")" == "Linux" ]] ; then
     # Do something under GNU/Linux platform
     #put "${ACTION} $*" ;
     sshswitchkey_and_commit_here "$*"
 
-  elif [[ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]] ; then
+  elif [[ "$(cut -c1-10 <<< "$(uname -s)")" == "MINGW32_NT" ]] ; then
     # Do something under Windows NT platform
     # nothing here
     #put "${ACTION} $*" ;
     sshswitchkey_and_commit_here "$*"
 
-  elif [[ "$(expr substr $(uname -s) 1 10)" == "MINGW64_NT" ]] ; then
+  elif [[ "$(cut -c1-10 <<< "$(uname -s)")" == "MINGW64_NT" ]] ; then
     # Do something under Windows NT platform
     # nothing here
     #put "${ACTION} $*" ;

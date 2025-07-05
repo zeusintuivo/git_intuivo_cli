@@ -30,11 +30,11 @@ fi
     # Do something under Mac OS X platform    
       git clone $1 --branch master --single-branch --depth 1
   
-  elif [[ "$(expr substr $(uname -s) 1 5)" == "Linux" ]] ; then 
+  elif [[ "$(cut -c1-5 <<< "$(uname -s)")" == "Linux" ]] ; then 
     # Do something under GNU/Linux platform
     git clone $1 --branch master --single-branch --depth 1
   
-  elif [[ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]] ; then 
+  elif [[ "$(cut -c1-10 <<< "$(uname -s)")" == "MINGW32_NT" ]] ; then 
     # Do something under Windows NT platform
     git clone $1 --branch master --single-branch --depth 1
     # nothing here

@@ -12,7 +12,7 @@ function unstaged_commit_git() {
   local EXCEPTION_LIST UNSTAGE_THIS_FILE
   # check operation systems
   (
-    if [[ "$(uname)" == "Darwin" ]] || [[ "$(expr substr $(uname -s) 1 5)" == "Linux" ]] ; then
+    if [[ "$(uname)" == "Darwin" ]] || [[ "$(cut -c1-5 <<< "$(uname -s)")" == "Linux" ]] ; then
     {
       # Do something under Mac OS X platform
 
@@ -29,13 +29,15 @@ function unstaged_commit_git() {
       while read -r UNSTAGE_THIS_FILE; do
       {
 
-        [ -z ${UNSTAGE_THIS_FILE} ] && continue        # skip if not empty
+        [[ -z "${UNSTAGE_THIS_FILE}" ]] && continue        # skip if not empty
         [[ ! -f "${UNSTAGE_THIS_FILE}" ]] && continue  # skip if file not exists skip ... like it was deleted, moved or renamed
         git reset HEAD -- "${UNSTAGE_THIS_FILE}" > /dev/null 2>&1
+        git restore --staged "${UNSTAGE_THIS_FILE}" > /dev/null 2>&1
+
       }
       done <<< "${EXCEPTION_LIST}"
     }
-    elif [[ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]] ; then
+    elif [[ "$(cut -c1-10 <<< "$(uname -s)")" == "MINGW32_NT" ]] ; then
     {
       # Do something under Windows NT platform
       echo "PENDING WINDOWS IMPLEMENTATION";
@@ -44,4 +46,3 @@ function unstaged_commit_git() {
     fi
   )
 } # end unstaged_commit_git
-

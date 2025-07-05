@@ -27,7 +27,7 @@ echo -e "${PURPLE_BLUE} === Project participation for ${CYAN} ${REPONAME} ${PURP
 #echo
 # check operation systems
 (
-  if [[ "$(uname)" == "Darwin" ]] || [[ "$(expr substr $(uname -s) 1 5)" == "Linux" ]] ; then  # MAC, Linux
+  if [[ "$(uname)" == "Darwin" ]] || [[ "$(cut -c1-5 <<< "$(uname -s)")" == "Linux" ]] ; then  # MAC, Linux
     # Do something under GNU/Linux platform
     export TERM=msys
 		#git shortlog -sne
@@ -40,7 +40,7 @@ echo -e "${PURPLE_BLUE} === Project participation for ${CYAN} ${REPONAME} ${PURP
 		git log --pretty=format:%an | gawk '{ ++c[$3]; } END { for(cc in c) printf "%6d %s\n",c[cc],cc; }' | ${SORT_MAX_COUNT};
 		#echo
 
-  elif [[ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]] ; then  #windows
+  elif [[ "$(cut -c1-10 <<< "$(uname -s)")" == "MINGW32_NT" ]] ; then  #windows
     # Do something under Windows NT platform
 		set TERM=msys
 
